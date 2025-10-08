@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>조랄두껍</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: 'Arial Black', sans-serif;
+            width: 100vw;
+            height: 100vh;
+            cursor: crosshair;
+            color: #fff;
+        }
+
+        /* UI */
+        #ui {
+            position: fixed;
+            top: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 30px;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        #score {
+            color: #fff;
+            font-size: 36px;
+            font-weight: 900;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 15px;
+            border-radius: 10px;
+        }
+
+        #lives {
+            display: flex;
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 10px;
+        }
+
+        .heart {
+            font-size: 28px;
+            filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.8));
+        }
+
+        .heart.lost {
+            opacity: 0.2;
+        }
+
+        /* 메인 메뉴 */
+        #main-menu {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        #main-menu h1 {
+            font-size: 80px;
+            margin-bottom: 20px;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            text-align: center;
+        }
+
+        #main-menu h2 {
+            font-size: 30px;
+            margin-bottom: 40px;
+            color: #ccc;
+            text-align: center;
+        }
+
+        .menu-btn {
+            padding: 15px 60px;
+            font-size: 24px;
+            background: #fff;
+            color: #000;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 900;
+            transition: all 0.3s;
+            margin: 10px 0;
+            width: 300px;
+            text-align: center;
+        }
+
+        .menu-btn:hover {
+            background: #ffff00;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(255, 255, 0, 0.5);
+        }
+
+        /* 도감 모달 - z-index를 가장 높게 설정 */
+        #collection-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.98);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 20000; /* 가장 높은 z-index로 설정 */
+        }
+
+        #collection-modal.active {
+            display: flex;
+        }
+
+        #collection-content {
+            width: 90%;
+            max-width: 900px;
+            max-height: 80vh;
+            background: #111;
+            border-radius: 20px;
+            padding: 30px;
+            overflow-y: auto;
+            border: 3px solid #333;
+            box-shadow: 0 0 50px rgba(255, 255, 255, 0.1);
+        }
+
+        #collection-content h2 {
+            color: #fff;
+            font-size: 32px;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+        }
+
+        .collection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .collection-item {
+            background: #222;
+            border-radius: 12px;
+            padding: 15px;
+            border: 2px solid #444;
+            transition: all 0.3s;
+        }
+
+        .collection-item.discovered {
+            border-color: var(--item-color);
+            box-shadow: 0 0 20px var(--item-color);
+        }
+
+        .collection-item.locked {
+            opacity: 0.3;
+            background: #111;
+        }
+
+        .collection-item h3 {
+            color: #fff;
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .collection-item p {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .collection-stats {
+            color: #888;
+            font-size: 12px;
+        }
+
+        .close-btn {
+            display: block;
+            margin: 20px auto 0;
+            padding: 12px 40px;
+            background: #fff;
+            color: #000;
+            border: none;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* 보스 HP 바 */
+        #boss-hp-container {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            display: none;
+            z-index: 2000;
+        }
+
+        #boss-hp-container.active {
+            display: block;
+        }
+
+        #boss-name {
+            color: #ff00ff;
+            font-size: 28px;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px #ff00ff;
+        }
+
+        #boss-hp-bar {
+            width: 100%;
+            height: 30px;
+            background: #222;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 3px solid #ff00ff;
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.5);
+        }
+
+        #boss-hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff00ff, #ff66ff);
+            transition: width 0.3s;
+            box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        /* 개구리 */
+        .frog {
+            position: absolute;
+            cursor: pointer;
+            transition: filter 0.1s;
+            will-change: transform;
+        }
+
+        .frog:hover {
+            filter: brightness(1.4) drop-shadow(0 0 30px rgba(255, 255, 255, 0.9));
+        }
+
+        .frog video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+        }
+
+        .frog.boss video {
+            border: 5px solid #ff00ff;
+            box-shadow: 0 0 50px rgba(255, 0, 255, 1);
+            animation: bossPulse 1s infinite;
+        }
+
+        @keyframes bossPulse {
+            0%, 100% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.05); filter: brightness(1.5); }
+        }
+
+        /* 파티클 */
+        .blood-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #ff0000;
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 10px #ff0000;
+        }
+
+        /* 점수 팝업 */
+        .score-popup {
+            position: absolute;
+            color: #fff;
+            font-size: 40px;
+            font-weight: 900;
+            pointer-events: none;
+            z-index: 6000;
+            text-shadow: 0 0 20px currentColor;
+            animation: scoreFloat 0.8s ease-out forwards;
+        }
+
+        @keyframes scoreFloat {
+            to {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+        }
+
+        /* 화면 흔들림 */
+        @keyframes screenShake {
+            0%, 100% { transform: translate(0, 0) rotate(0); }
+            10% { transform: translate(-20px, 10px) rotate(-2deg); }
+            20% { transform: translate(20px, -10px) rotate(2deg); }
+            30% { transform: translate(-15px, -15px) rotate(-1deg); }
+            40% { transform: translate(15px, 15px) rotate(1deg); }
+            50% { transform: translate(-20px, 10px) rotate(-2deg); }
+            60% { transform: translate(20px, -10px) rotate(2deg); }
+            70% { transform: translate(-15px, -15px) rotate(-1deg); }
+            80% { transform: translate(15px, 15px) rotate(1deg); }
+            90% { transform: translate(-10px, 10px) rotate(-1deg); }
+        }
+
+        body.shake {
+            animation: screenShake 0.5s;
+        }
+
+        /* 플래시 (피격시) */
+        #damage-flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #fff;
+            display: none;
+            z-index: 8000;
+            pointer-events: none;
+            animation: damageFlash 0.3s;
+        }
+
+        #damage-flash.active {
+            display: block;
+        }
+
+        @keyframes damageFlash {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 0.8; }
+        }
+
+        /* 게임오버 */
+        #game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 15000;
+        }
+
+        #game-over.active {
+            display: flex;
+        }
+
+        #game-over h1 {
+            color: #ff3333;
+            font-size: 64px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 30px rgba(255, 51, 51, 0.8);
+        }
+
+        #final-stats {
+            color: #fff;
+            font-size: 28px;
+            margin-bottom: 30px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .game-over-btn {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: #fff;
+            color: #000;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.3s;
+            margin: 10px;
+        }
+
+        .game-over-btn:hover {
+            background: #ffff00;
+            transform: translateY(-3px);
+        }
+
+        /* 콤보 표시 */
+        #combo-display {
+            position: fixed;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 24px;
+            color: #ffff00;
+            text-shadow: 0 0 15px rgba(255, 255, 0, 0.8);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        #combo-display.active {
+            opacity: 1;
+        }
+
+        /* 특수 효과 */
+        .special-effect {
+            position: absolute;
+            pointer-events: none;
+            z-index: 5000;
+        }
+
+        /* 난이도 표시 */
+        #difficulty-display {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-size: 18px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 15px;
+            border-radius: 10px;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        /* 게임 일시정지 */
+        #pause-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 8px;
+            z-index: 2000;
+            transition: all 0.3s;
+        }
+
+        #pause-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        /* 일시정지 화면 */
+        #pause-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 19000;
+        }
+
+        #pause-screen.active {
+            display: flex;
+        }
+
+        #pause-screen h1 {
+            color: #fff;
+            font-size: 64px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+        }
+
+        .pause-btn {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: #fff;
+            color: #000;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.3s;
+            margin: 10px;
+        }
+
+        .pause-btn:hover {
+            background: #ffff00;
+            transform: translateY(-3px);
+        }
+
+        /* 두꺼비 특수 효과 애니메이션 */
+        @keyframes hypnotize {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        @keyframes teleport {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes dance {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
+        }
+
+        @keyframes flex {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <div id="score">0</div>
+        <div id="lives">
+            <span class="heart">❤️</span>
+            <span class="heart">❤️</span>
+            <span class="heart">❤️</span>
+        </div>
+    </div>
+
+    <div id="difficulty-display">난이도: 초급</div>
+
+    <div id="boss-hp-container">
+        <div id="boss-name">🌟 여유껍 🌟</div>
+        <div id="boss-hp-bar">
+            <div id="boss-hp-fill"></div>
+        </div>
+    </div>
+
+    <div id="damage-flash"></div>
+
+    <div id="combo-display">콤보 x<span id="combo-count">0</span></div>
+
+    <button id="pause-btn">일시정지</button>
+
+    <div id="pause-screen">
+        <h1>일시정지</h1>
+        <button class="pause-btn" id="resume-btn">계속</button>
+        <button class="pause-btn" id="pause-collection-btn">도감</button>
+        <button class="pause-btn" id="pause-main-menu-btn">메뉴</button>
+    </div>
+
+    <div id="main-menu">
+        <h1>🐸 조랄두껍 🐸</h1>
+        <h2>독두껍들을 클릭해서 잡아라!</h2>
+        <button class="menu-btn" id="start-btn">게임시작</button>
+        <button class="menu-btn" id="collection-menu-btn">도감</button>
+        <button class="menu-btn" id="how-to-play-btn">방법</button>
+    </div>
+
+    <div id="collection-modal">
+        <div id="collection-content">
+            <h2>🐸 독두껍 도감 🐸</h2>
+            <div class="collection-grid" id="collection-grid"></div>
+            <button class="close-btn" id="close-collection">닫기</button>
+        </div>
+    </div>
+
+    <div id="game-over">
+        <h1>게임 오버</h1>
+        <div id="final-stats"></div>
+        <button class="game-over-btn" id="restart-btn">다시시작</button>
+        <button class="game-over-btn" id="collection-gameover-btn">도감</button>
+        <button class="game-over-btn" id="main-menu-btn">메뉴</button>
+    </div>
+
+    <script>
+        const state = {
+            score: 0,
+            lives: 3,
+            combo: 0,
+            active: false,
+            paused: false,
+            startTime: 0,
+            lastHitTime: 0,
+            spawnDelay: 800,
+            minSpawnDelay: 300,
+            frogs: new Set(),
+            discovered: new Set(),
+            bossActive: false,
+            bossHP: 0,
+            maxBossHP: 0,
+            bossFrog: null,
+            gameTime: 0,
+            difficultyLevel: 0,
+            difficultyNames: ['초급', '중급', '고급', '고수', '지옥','지랄','게이','두껍','울티메이트두껍레전드']
+        };
+
+        // 효과음 로드
+        const hitSound = new Audio('https://www.myinstants.com/media/sounds/tuco-get-out.mp3');
+        const damageSound = new Audio('https://www.myinstants.com/media/sounds/shocked-sound-effect.mp3');
+        
+        // 볼륨 설정
+        hitSound.volume = 0.3;
+        damageSound.volume = 0.5;
+
+        // 효과음 미리 로드
+        hitSound.load();
+        damageSound.load();
+
+        const frogTypes = {
+            chingu: {
+                name: '친구껍',
+                video: 'https://media.tenor.com/qSQ3mTn58vgAAAPo/frog-eat.mp4',
+                lifespan: 2500,
+                points: 15,
+                size: 60,
+                maxSize: 280,
+                spawnChance: 0.12,
+                color: '#4CAF50',
+                description: '배고픈 친구. 먹이를 찾고있다.',
+                behavior: 'normal'
+            },
+            ggamnol: {
+                name: '깜놀껍',
+                video: 'https://media.tenor.com/_wfKmsxm0HgAAAPo/souichi-tsujii-sayuri.mp4',
+                lifespan: 1200,
+                points: 40,
+                size: 50,
+                maxSize: 200,
+                spawnChance: 0.08,
+                color: '#9C27B0',
+                description: '순간이동하며 깜짝놀래킨다!',
+                behavior: 'teleport',
+                teleportChance: 0.3
+            },
+            dance: {
+                name: '댄스껍',
+                video: 'https://media.tenor.com/XxZQsifhe0AAAAPo/frog-toad.mp4',
+                lifespan: 2800,
+                points: 20,
+                size: 55,
+                maxSize: 300,
+                spawnChance: 0.11,
+                color: '#00BCD4',
+                description: '춤추는 걸 좋아하는 흥많은 두껍',
+                behavior: 'dance'
+            },
+            eungdi: {
+                name: '응디껍',
+                video: 'https://media.tenor.com/7b3eYQD9moQAAAPo/frog-toad-flex-twerk.mp4',
+                lifespan: 2600,
+                points: 25,
+                size: 50,
+                maxSize: 290,
+                spawnChance: 0.10,
+                color: '#FF5722',
+                description: '자신감 넘치는 근육질 두껍',
+                behavior: 'flex'
+            },
+            ddungbo: {
+                name: '뚱보껍',
+                video: 'https://media.tenor.com/uvuwfwB8VrQAAAPo/frog-frogs.mp4',
+                lifespan: 3200,
+                points: 30,
+                size: 70,
+                maxSize: 400,
+                spawnChance: 0.09,
+                color: '#8BC34A',
+                description: '느리지만 거대하다. 맞추기 쉽다.',
+                behavior: 'slow'
+            },
+            nuclear: {
+                name: '핵독껍',
+                video: 'https://media.tenor.com/GEjoMjVhYuMAAAPo/futurama-hypnotoad.mp4',
+                lifespan: 2000,
+                points: 100,
+                size: 45,
+                maxSize: 250,
+                spawnChance: 0.03,
+                color: '#FFD700',
+                description: '최면 능력 보유',
+                behavior: 'hypnotize'
+            },
+            shinnan: {
+                name: '신난두껍',
+                video: 'https://media.tenor.com/tLf4YbvzJ6sAAAPo/yee-toad.mp4',
+                lifespan: 2400,
+                points: 18,
+                size: 52,
+                maxSize: 270,
+                spawnChance: 0.12,
+                color: '#FFEB3B',
+                description: '항상 신나있는 긍정적인두껍',
+                behavior: 'excited'
+            },
+            sinsa: {
+                name: '신사껍',
+                video: 'https://media.tenor.com/ZYmQDoqtUN4AAAPo/colonel-toad.mp4',
+                lifespan: 2700,
+                points: 35,
+                size: 58,
+                maxSize: 310,
+                spawnChance: 0.08,
+                color: '#795548',
+                description: '품위있는신사. 느리게 움직인다.',
+                behavior: 'gentleman'
+            },
+            eogul: {
+                name: '억울껍',
+                video: 'https://media.tenor.com/Dxp0w3YjOjkAAAPo/frog-sitting.mp4',
+                lifespan: 2300,
+                points: 22,
+                size: 54,
+                maxSize: 280,
+                spawnChance: 0.10,
+                color: '#607D8B',
+                description: '억울한 표정의 두껍. 불쌍하다.',
+                behavior: 'sad'
+            },
+            dwae: {
+                name: '돼공껍',
+                video: 'https://media.tenor.com/4uQqOK2AQrwAAAPo/10th-kingdom-frogs.mp4',
+                lifespan: 1800,
+                points: 45,
+                size: 48,
+                maxSize: 220,
+                spawnChance: 0.07,
+                color: '#E91E63',
+                description: '급격히커지는변이두껍!',
+                behavior: 'growFast'
+            },
+            sibi: {
+                name: '시비껍',
+                video: 'https://media.tenor.com/TO7MRzBkquMAAAPo/rawr-thumb.mp4',
+                lifespan: 1500,
+                points: 50,
+                size: 42,
+                maxSize: 190,
+                spawnChance: 0.06,
+                color: '#FF1744',
+                description: '공격적이고 빠른 두껍.',
+                behavior: 'aggressive'
+            },
+            flower: {
+                name: '꽃두껍',
+                video: 'https://media.tenor.com/40xvCEgMIj4AAAPo/twerg45-toad.mp4',
+                lifespan: 2900,
+                points: 28,
+                size: 56,
+                maxSize: 295,
+                spawnChance: 0.09,
+                color: '#E1BEE7',
+                description: '꽃처럼 아름다운 두껍',
+                behavior: 'flower'
+            },
+            rapper: {
+                name: '레퍼껍',
+                video: 'https://media.tenor.com/Kx3RklAD3-MAAAPo/toad-frog.mp4',
+                lifespan: 1600,
+                points: 38,
+                size: 46,
+                maxSize: 210,
+                spawnChance: 0.07,
+                color: '#9575CD',
+                description: '리듬을 탄다. 잡기 힘들다',
+                behavior: 'rap'
+            },
+            rush: {
+                name: '돌격껍',
+                video: 'https://media.tenor.com/3ymk3wPLjUwAAAPo/toad.mp4',
+                lifespan: 1100,
+                points: 60,
+                size: 40,
+                maxSize: 180,
+                spawnChance: 0.05,
+                color: '#F44336',
+                description: '초고속 돌진! 맞추기 어렵다.',
+                behavior: 'rush'
+            },
+            boss: {
+                name: '여유껍',
+                video: 'https://media.tenor.com/97gH8VzfSMQAAAPo/poke-frog.mp4',
+                lifespan: 999999,
+                points: 500,
+                size: 80,
+                maxSize: 450,
+                spawnChance: 0.002,
+                color: '#ff00ff',
+                description: '전설의 끝판왕두껍. 절대 아무나 못건들인다',
+                behavior: 'boss'
+            }
+        };
+
+        let spawnInterval, difficultyInterval, gameTimeInterval;
+
+        function updateUI() {
+            document.getElementById('score').textContent = state.score;
+            const hearts = document.querySelectorAll('.heart');
+            hearts.forEach((heart, i) => {
+                heart.classList.toggle('lost', i >= state.lives);
+            });
+            
+            // 콤보 표시 업데이트
+            const comboDisplay = document.getElementById('combo-display');
+            const comboCount = document.getElementById('combo-count');
+            comboCount.textContent = state.combo;
+            
+            if (state.combo > 1) {
+                comboDisplay.classList.add('active');
+            } else {
+                comboDisplay.classList.remove('active');
+            }
+            
+            // 난이도 표시 업데이트
+            document.getElementById('difficulty-display').textContent = `난이도: ${state.difficultyNames[state.difficultyLevel]}`;
+        }
+
+        function createBloodParticles(x, y, count = 30) {
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'blood-particle';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                
+                const angle = (Math.PI * 2 * i) / count;
+                const speed = 3 + Math.random() * 5;
+                const distance = 80 + Math.random() * 120;
+                
+                const vx = Math.cos(angle) * speed;
+                const vy = Math.sin(angle) * speed;
+                
+                document.body.appendChild(particle);
+                
+                let px = x, py = y;
+                let frame = 0;
+                const maxFrames = 40;
+                
+                function animateParticle() {
+                    if (frame >= maxFrames) {
+                        particle.remove();
+                        return;
+                    }
+                    
+                    px += vx;
+                    py += vy + frame * 0.2;
+                    
+                    particle.style.left = px + 'px';
+                    particle.style.top = py + 'px';
+                    particle.style.opacity = 1 - (frame / maxFrames);
+                    
+                    frame++;
+                    requestAnimationFrame(animateParticle);
+                }
+                
+                animateParticle();
+            }
+        }
+
+        function screenShake() {
+            document.body.classList.add('shake');
+            setTimeout(() => document.body.classList.remove('shake'), 500);
+        }
+
+        function showScorePopup(x, y, points, color = '#fff') {
+            const popup = document.createElement('div');
+            popup.className = 'score-popup';
+            popup.textContent = `+${points}`;
+            popup.style.left = x + 'px';
+            popup.style.top = y + 'px';
+            popup.style.color = color;
+            document.body.appendChild(popup);
+            setTimeout(() => popup.remove(), 800);
+        }
+
+        function damageFlash() {
+            const flash = document.getElementById('damage-flash');
+            flash.classList.add('active');
+            setTimeout(() => flash.classList.remove('active'), 300);
+        }
+
+        function createSpecialEffect(x, y, type) {
+            const effect = document.createElement('div');
+            effect.className = 'special-effect';
+            effect.style.left = x + 'px';
+            effect.style.top = y + 'px';
+            
+            if (type === 'hypnotize') {
+                effect.style.width = '200px';
+                effect.style.height = '200px';
+                effect.style.border = '5px solid #FFD700';
+                effect.style.borderRadius = '50%';
+                effect.style.boxShadow = '0 0 30px #FFD700';
+                effect.style.animation = 'hypnotize 1s forwards';
+                
+                document.body.appendChild(effect);
+                setTimeout(() => effect.remove(), 1000);
+            }
+            // 다른 효과들도 추가 가능
+        }
+
+        function spawnBoss() {
+            if (state.bossActive) return;
+            
+            state.bossActive = true;
+            state.bossHP = 15 + state.difficultyLevel * 5;
+            state.maxBossHP = state.bossHP;
+            
+            const bossData = frogTypes.boss;
+            const frog = document.createElement('div');
+            frog.className = 'frog boss';
+            
+            const video = document.createElement('video');
+            video.src = bossData.video;
+            video.autoplay = true;
+            video.loop = true;
+            video.muted = true;
+            video.playsInline = true;
+            frog.appendChild(video);
+            document.body.appendChild(frog);
+            
+            state.bossFrog = frog;
+            state.frogs.add(frog);
+            state.discovered.add('boss');
+            
+            document.getElementById('boss-hp-container').classList.add('active');
+            updateBossHP();
+            
+            let x = window.innerWidth / 2;
+            let y = window.innerHeight / 2;
+            let size = bossData.size;
+            const maxSize = bossData.maxSize;
+            let destroyed = false;
+            let startTime = Date.now();
+            let moveAngle = Math.random() * Math.PI * 2;
+            let changeDirectionTime = Date.now();
+            let lastAttackTime = Date.now();
+            
+            function animate() {
+                if (destroyed || !state.active || state.paused) return;
+                
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / 5000, 1);
+                size = bossData.size + Math.pow(progress, 1.5) * (maxSize - bossData.size);
+                
+                if (Date.now() - changeDirectionTime > 1500) {
+                    moveAngle = Math.random() * Math.PI * 2;
+                    changeDirectionTime = Date.now();
+                }
+                
+                x += Math.cos(moveAngle) * (2 + state.difficultyLevel * 0.5);
+                y += Math.sin(moveAngle) * (2 + state.difficultyLevel * 0.5);
+                
+                x = Math.max(size / 2, Math.min(window.innerWidth - size / 2, x));
+                y = Math.max(size / 2, Math.min(window.innerHeight - size / 2, y));
+                
+                frog.style.left = (x - size / 2) + 'px';
+                frog.style.top = (y - size / 2) + 'px';
+                frog.style.width = size + 'px';
+                frog.style.height = size + 'px';
+                
+                // 보스 공격 패턴
+                if (Date.now() - lastAttackTime > 3000) {
+                    lastAttackTime = Date.now();
+                    // 보스가 공격할 때 추가 효과
+                    createSpecialEffect(x, y, 'hypnotize');
+                }
+                
+                if (Math.random() < 0.005 && state.bossHP < state.maxBossHP) {
+                    state.bossHP = Math.min(state.maxBossHP, state.bossHP + 1);
+                    updateBossHP();
+                }
+                
+                requestAnimationFrame(animate);
+            }
+            
+            animate();
+            
+            frog.addEventListener('click', (e) => {
+                if (destroyed || !state.active || state.paused) return;
+                e.stopPropagation();
+                
+                // 효과음 재생
+                hitSound.currentTime = 0;
+                hitSound.play().catch(e => console.log("오디오 재생 오류:", e));
+                
+                state.bossHP--;
+                updateBossHP();
+                createBloodParticles(x, y, 20);
+                screenShake();
+                
+                const damage = 50;
+                state.score += damage;
+                updateUI();
+                showScorePopup(x, y, damage, '#ff00ff');
+                
+                if (state.bossHP <= 0) {
+                    destroyed = true;
+                    state.bossActive = false;
+                    state.bossFrog = null;
+                    
+                    createBloodParticles(x, y, 60);
+                    screenShake();
+                    
+                    state.score += bossData.points;
+                    updateUI();
+                    showScorePopup(x, y, bossData.points, '#FFD700');
+                    
+                    frog.remove();
+                    state.frogs.delete(frog);
+                    document.getElementById('boss-hp-container').classList.remove('active');
+                }
+            });
+        }
+
+        function updateBossHP() {
+            const percent = (state.bossHP / state.maxBossHP) * 100;
+            document.getElementById('boss-hp-fill').style.width = percent + '%';
+        }
+
+        function spawnFrog() {
+            if (!state.active || state.paused) return;
+            
+            const rand = Math.random();
+            let cumulativeChance = 0;
+            let selectedType = 'chingu';
+            
+            for (const [key, data] of Object.entries(frogTypes)) {
+                if (key === 'boss') {
+                    if (rand < 0.002 && !state.bossActive && state.score > 1000) {
+                        spawnBoss();
+                        return;
+                    }
+                    continue;
+                }
+                
+                cumulativeChance += data.spawnChance;
+                if (rand < cumulativeChance) {
+                    selectedType = key;
+                    break;
+                }
+            }
+            
+            const frogData = frogTypes[selectedType];
+            const frog = document.createElement('div');
+            frog.className = 'frog';
+            frog.dataset.type = selectedType;
+            
+            const video = document.createElement('video');
+            video.src = frogData.video;
+            video.autoplay = true;
+            video.loop = true;
+            video.muted = true;
+            video.playsInline = true;
+            frog.appendChild(video);
+            
+            frog.querySelector('video').style.borderColor = frogData.color;
+            
+            document.body.appendChild(frog);
+            state.frogs.add(frog);
+            state.discovered.add(selectedType);
+            
+            const side = Math.floor(Math.random() * 4);
+            let startX, startY;
+            const margin = 50;
+            
+            if (side === 0) {
+                startX = margin;
+                startY = margin + Math.random() * (window.innerHeight - margin * 2);
+            } else if (side === 1) {
+                startX = window.innerWidth - margin;
+                startY = margin + Math.random() * (window.innerHeight - margin * 2);
+            } else if (side === 2) {
+                startX = margin + Math.random() * (window.innerWidth - margin * 2);
+                startY = margin;
+            } else {
+                startX = margin + Math.random() * (window.innerWidth - margin * 2);
+                startY = window.innerHeight - margin;
+            }
+            
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            const targetX = centerX + (Math.random() - 0.5) * 400;
+            const targetY = centerY + (Math.random() - 0.5) * 400;
+            
+            let size = frogData.size;
+            let currentX = startX;
+            let currentY = startY;
+            let destroyed = false;
+            let startTime = Date.now();
+            let lastTeleport = startTime;
+            let danceOffset = 0;
+            let flexTime = 0;
+            let growFactor = 1;
+            let rushSpeed = 0;
+            
+            function animate() {
+                if (destroyed || !state.active || state.paused) return;
+                
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / (frogData.lifespan - state.difficultyLevel * 200), 1);
+                
+                let easeProgress = 1 - Math.pow(1 - progress, 3);
+                
+                // 각 두꺼비의 특수 행동 패턴
+                switch(frogData.behavior) {
+                    case 'teleport':
+                        if (Math.random() < 0.02) {
+                            currentX += (Math.random() - 0.5) * 300;
+                            currentY += (Math.random() - 0.5) * 300;
+                            frog.style.animation = 'teleport 0.2s';
+                            setTimeout(() => frog.style.animation = '', 200);
+                        }
+                        break;
+                        
+                    case 'dance':
+                        danceOffset = Math.sin(elapsed / 200) * 50;
+                        currentX = startX + (targetX - startX) * easeProgress + danceOffset;
+                        currentY = startY + (targetY - startY) * easeProgress;
+                        frog.style.animation = 'dance 0.5s infinite';
+                        break;
+                        
+                    case 'flex':
+                        flexTime += 0.1;
+                        currentX = startX + (targetX - startX) * easeProgress + Math.sin(flexTime) * 30;
+                        currentY = startY + (targetY - startY) * easeProgress;
+                        frog.style.animation = 'flex 0.5s infinite';
+                        break;
+                        
+                    case 'growFast':
+                        growFactor = 1 + progress * 2;
+                        break;
+                        
+                    case 'rush':
+                        if (rushSpeed === 0) rushSpeed = 5 + Math.random() * 3;
+                        easeProgress = 1 - Math.pow(1 - progress, 5);
+                        break;
+                        
+                    case 'aggressive':
+                        easeProgress = 1 - Math.pow(1 - progress, 4);
+                        break;
+                        
+                    case 'hypnotize':
+                        if (Math.random() < 0.01) {
+                            createSpecialEffect(currentX, currentY, 'hypnotize');
+                        }
+                        break;
+                        
+                    default:
+                        // 기본 동작
+                        currentX = startX + (targetX - startX) * easeProgress;
+                        currentY = startY + (targetY - startY) * easeProgress;
+                }
+                
+                size = frogData.size + Math.pow(progress, 2) * (frogData.maxSize - frogData.size);
+                size *= growFactor;
+                
+                frog.style.left = (currentX - size / 2) + 'px';
+                frog.style.top = (currentY - size / 2) + 'px';
+                frog.style.width = size + 'px';
+                frog.style.height = size + 'px';
+                
+                if (progress >= 1) {
+                    destroyed = true;
+                    frog.remove();
+                    state.frogs.delete(frog);
+                    loseLife();
+                    return;
+                }
+                
+                requestAnimationFrame(animate);
+            }
+            
+            animate();
+            
+            frog.addEventListener('click', (e) => {
+                if (destroyed || !state.active || state.paused) return;
+                destroyed = true;
+                e.stopPropagation();
+                
+                // 효과음 재생
+                hitSound.currentTime = 0;
+                hitSound.play().catch(e => console.log("오디오 재생 오류:", e));
+                
+                createBloodParticles(currentX, currentY, 30);
+                screenShake();
+                
+                const now = Date.now();
+                if (now - state.lastHitTime < 1200) {
+                    state.combo++;
+                } else {
+                    state.combo = 1;
+                }
+                state.lastHitTime = now;
+                
+                const comboMultiplier = 1 + Math.min(state.combo * 0.15, 2);
+                const earnedPoints = Math.floor(frogData.points * comboMultiplier);
+                
+                state.score += earnedPoints;
+                updateUI();
+                showScorePopup(currentX, currentY, earnedPoints, frogData.color);
+                
+                frog.remove();
+                state.frogs.delete(frog);
+            });
+        }
+
+        function loseLife() {
+            state.lives--;
+            state.combo = 0;
+            updateUI();
+            
+            // 피격음 재생
+            damageSound.currentTime = 0;
+            damageSound.play().catch(e => console.log("오디오 재생 오류:", e));
+            
+            damageFlash();
+            screenShake();
+            
+            if (state.lives <= 0) {
+                gameOver();
+            }
+        }
+
+        function increaseDifficulty() {
+            if (!state.active || state.spawnDelay <= state.minSpawnDelay || state.paused) return;
+            state.spawnDelay = Math.max(state.minSpawnDelay, state.spawnDelay - 30);
+            state.difficultyLevel = Math.min(4, Math.floor((800 - state.spawnDelay) / 100));
+            
+            clearInterval(spawnInterval);
+            spawnInterval = setInterval(spawnFrog, state.spawnDelay);
+            
+            updateUI();
+        }
+
+        function updateGameTime() {
+            if (!state.active || state.paused) return;
+            state.gameTime = Date.now() - state.startTime;
+        }
+
+        function gameOver() {
+            state.active = false;
+            clearInterval(spawnInterval);
+            clearInterval(difficultyInterval);
+            clearInterval(gameTimeInterval);
+            
+            state.frogs.forEach(frog => frog.remove());
+            state.frogs.clear();
+            
+            const elapsed = (state.gameTime / 1000).toFixed(1);
+            document.getElementById('final-stats').innerHTML = `
+                최종 점수: <strong>${state.score}</strong><br>
+                생존 시간: <strong>${elapsed}초</strong><br>
+                발견한 독두껍: <strong>${state.discovered.size}/15</strong><br>
+                최종 난이도: <strong>${state.difficultyNames[state.difficultyLevel]}</strong>
+            `;
+            
+            document.getElementById('game-over').classList.add('active');
+        }
+
+        function startGame() {
+            state.score = 0;
+            state.lives = 3;
+            state.combo = 0;
+            state.active = true;
+            state.paused = false;
+            state.startTime = Date.now();
+            state.lastHitTime = 0;
+            state.spawnDelay = 800;
+            state.bossActive = false;
+            state.bossHP = 0;
+            state.bossFrog = null;
+            state.frogs.clear();
+            state.gameTime = 0;
+            state.difficultyLevel = 0;
+            
+            updateUI();
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('game-over').classList.remove('active');
+            document.getElementById('boss-hp-container').classList.remove('active');
+            document.getElementById('pause-screen').classList.remove('active');
+            
+            spawnInterval = setInterval(spawnFrog, state.spawnDelay);
+            difficultyInterval = setInterval(increaseDifficulty, 2500);
+            gameTimeInterval = setInterval(updateGameTime, 1000);
+        }
+
+        function togglePause() {
+            if (!state.active) return;
+            
+            state.paused = !state.paused;
+            
+            if (state.paused) {
+                document.getElementById('pause-screen').classList.add('active');
+            } else {
+                document.getElementById('pause-screen').classList.remove('active');
+            }
+        }
+
+        function showMainMenu() {
+            state.active = false;
+            state.paused = false;
+            clearInterval(spawnInterval);
+            clearInterval(difficultyInterval);
+            clearInterval(gameTimeInterval);
+            
+            state.frogs.forEach(frog => frog.remove());
+            state.frogs.clear();
+            
+            document.getElementById('main-menu').style.display = 'flex';
+            document.getElementById('game-over').classList.remove('active');
+            document.getElementById('collection-modal').classList.remove('active');
+            document.getElementById('pause-screen').classList.remove('active');
+        }
+
+        function updateCollection() {
+            const grid = document.getElementById('collection-grid');
+            grid.innerHTML = '';
+            
+            for (const [key, data] of Object.entries(frogTypes)) {
+                const item = document.createElement('div');
+                item.className = 'collection-item';
+                item.style.setProperty('--item-color', data.color);
+                
+                if (state.discovered.has(key)) {
+                    item.classList.add('discovered');
+                    item.innerHTML = `
+                        <h3>${data.name}</h3>
+                        <p>${data.description}</p>
+                        <div class="collection-stats">
+                            점수: ${data.points} | 수명: ${(data.lifespan/1000).toFixed(1)}초
+                        </div>
+                    `;
+                } else {
+                    item.classList.add('locked');
+                    item.innerHTML = `
+                        <h3>???</h3>
+                        <p>아직 발견하지 못한 독두껍</p>
+                    `;
+                }
+                
+                grid.appendChild(item);
+            }
+        }
+
+        // 이벤트 리스너 설정
+        document.getElementById('start-btn').addEventListener('click', startGame);
+        document.getElementById('collection-menu-btn').addEventListener('click', () => {
+            updateCollection();
+            document.getElementById('collection-modal').classList.add('active');
+        });
+        document.getElementById('how-to-play-btn').addEventListener('click', () => {
+            alert("조랄두껍잡기");
+        });
+
+        document.getElementById('close-collection').addEventListener('click', () => {
+            document.getElementById('collection-modal').classList.remove('active');
+        });
+
+        document.getElementById('restart-btn').addEventListener('click', startGame);
+        document.getElementById('collection-gameover-btn').addEventListener('click', () => {
+            updateCollection();
+            document.getElementById('collection-modal').classList.add('active');
+        });
+        document.getElementById('main-menu-btn').addEventListener('click', showMainMenu);
+
+        document.getElementById('pause-btn').addEventListener('click', togglePause);
+        document.getElementById('resume-btn').addEventListener('click', togglePause);
+        document.getElementById('pause-collection-btn').addEventListener('click', () => {
+            updateCollection();
+            document.getElementById('collection-modal').classList.add('active');
+        });
+        document.getElementById('pause-main-menu-btn').addEventListener('click', showMainMenu);
+
+        // 게임 시작 시 메인 메뉴 표시
+        showMainMenu();
+    </script>
+</body>
+</html>
