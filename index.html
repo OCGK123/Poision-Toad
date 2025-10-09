@@ -9,6 +9,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            user-select: none;
         }
 
         body {
@@ -258,6 +259,22 @@
             filter: brightness(1.4) drop-shadow(0 0 30px rgba(255, 255, 255, 0.9));
         }
 
+        .frog.shiny {
+            filter: brightness(1.5) saturate(1.4) drop-shadow(0 0 30px rgba(255, 230, 102, 0.8));
+            animation: shinyPulse 1.2s infinite;
+        }
+
+        .frog.shiny::after {
+            content: '';
+            position: absolute;
+            inset: -12px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 60%);
+            opacity: 0.8;
+            pointer-events: none;
+            animation: sparkle 1.8s infinite;
+        }
+
         .frog video {
             width: 100%;
             height: 100%;
@@ -265,6 +282,11 @@
             border-radius: 50%;
             border: 3px solid rgba(255, 255, 255, 0.4);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+        }
+
+        .frog.shiny video {
+            border-color: #ffeb3b !important;
+            box-shadow: 0 0 35px rgba(255, 235, 59, 0.6);
         }
 
         .frog.boss video {
@@ -276,6 +298,16 @@
         @keyframes bossPulse {
             0%, 100% { transform: scale(1); filter: brightness(1); }
             50% { transform: scale(1.05); filter: brightness(1.5); }
+        }
+
+        @keyframes shinyPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.04); }
+        }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 0.4; transform: rotate(0deg) scale(1); }
+            50% { opacity: 1; transform: rotate(45deg) scale(1.1); }
         }
 
         /* 파티클 */
@@ -362,10 +394,12 @@
             justify-content: center;
             align-items: center;
             z-index: 15000;
+            pointer-events: none;
         }
 
         #game-over.active {
             display: flex;
+            pointer-events: auto;
         }
 
         #game-over h1 {
@@ -419,6 +453,73 @@
 
         #combo-display.active {
             opacity: 1;
+        }
+
+        /* 점수 로그 */
+        #score-log-panel {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            width: 280px;
+            max-height: 45vh;
+            background: rgba(0, 0, 0, 0.75);
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            padding: 18px 16px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1400;
+            backdrop-filter: blur(6px);
+            pointer-events: auto;
+        }
+
+        #score-log-panel h3 {
+            font-size: 18px;
+            color: #fff;
+            text-align: center;
+            text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+        }
+
+        #score-log {
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-right: 4px;
+        }
+
+        #score-log::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #score-log::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 6px;
+        }
+
+        .log-entry {
+            background: rgba(255, 255, 255, 0.06);
+            border-left: 3px solid rgba(255, 255, 255, 0.2);
+            padding: 6px 8px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.4;
+            color: #eee;
+            box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .log-entry.highlight {
+            border-left-color: #ffeb3b;
+            box-shadow: 0 0 18px rgba(255, 235, 59, 0.35);
+            color: #fffbcc;
+        }
+
+        .log-entry .timestamp {
+            display: block;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 2px;
         }
 
         /* 특수 효과 */
@@ -555,6 +656,11 @@
 
     <div id="combo-display">콤보 x<span id="combo-count">0</span></div>
 
+    <div id="score-log-panel">
+        <h3>점수 로그</h3>
+        <div id="score-log"></div>
+    </div>
+
     <button id="pause-btn">일시정지</button>
 
     <div id="pause-screen">
@@ -607,7 +713,9 @@
             bossFrog: null,
             gameTime: 0,
             difficultyLevel: 0,
-            difficultyNames: ['초급', '중급', '고급', '고수', '지옥','지랄','게이','두껍','울티메이트두껍레전드']
+            difficultyNames: ['초급', '중급', '고급', '고수', '지옥','지랄','게이','두껍','울티메이트두껍레전드'],
+            scoreLog: [],
+            shinyChance: 0.07
         };
 
         // 효과음 로드
@@ -807,6 +915,54 @@
         };
 
         let spawnInterval, difficultyInterval, gameTimeInterval;
+        const scoreLogElement = document.getElementById('score-log');
+        const MAX_LOG_ENTRIES = 40;
+
+        function formatLogTime(timestamp = Date.now()) {
+            if (!state.startTime) return '00:00';
+            const elapsed = Math.max(0, timestamp - state.startTime);
+            const totalSeconds = Math.floor(elapsed / 1000);
+            const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+            const seconds = String(totalSeconds % 60).padStart(2, '0');
+            return `${minutes}:${seconds}`;
+        }
+
+        function renderScoreLog() {
+            if (!scoreLogElement) return;
+            scoreLogElement.innerHTML = '';
+            state.scoreLog.forEach(entry => {
+                const wrapper = document.createElement('div');
+                wrapper.className = `log-entry${entry.highlight ? ' highlight' : ''}`;
+
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'timestamp';
+                timeSpan.textContent = entry.time;
+
+                const messageSpan = document.createElement('span');
+                messageSpan.textContent = entry.message;
+
+                wrapper.appendChild(timeSpan);
+                wrapper.appendChild(messageSpan);
+                scoreLogElement.appendChild(wrapper);
+            });
+
+            scoreLogElement.scrollTop = scoreLogElement.scrollHeight;
+        }
+
+        function logScore(message, options = {}) {
+            const timestamp = formatLogTime();
+            state.scoreLog.push({
+                time: timestamp,
+                message,
+                highlight: Boolean(options.highlight)
+            });
+
+            if (state.scoreLog.length > MAX_LOG_ENTRIES) {
+                state.scoreLog.splice(0, state.scoreLog.length - MAX_LOG_ENTRIES);
+            }
+
+            renderScoreLog();
+        }
 
         function updateUI() {
             document.getElementById('score').textContent = state.score;
@@ -939,6 +1095,7 @@
             
             document.getElementById('boss-hp-container').classList.add('active');
             updateBossHP();
+            logScore(`보스 등장! ${bossData.name} (HP ${state.bossHP})`, { highlight: true });
             
             let x = window.innerWidth / 2;
             let y = window.innerHeight / 2;
@@ -1000,6 +1157,7 @@
                 
                 state.bossHP--;
                 updateBossHP();
+                logScore(`보스 타격! 남은 체력 ${Math.max(state.bossHP, 0)}`, { highlight: true });
                 createBloodParticles(x, y, 20);
                 screenShake();
                 
@@ -1019,7 +1177,8 @@
                     state.score += bossData.points;
                     updateUI();
                     showScorePopup(x, y, bossData.points, '#FFD700');
-                    
+                    logScore(`${bossData.name} 격파! 추가 점수 +${bossData.points}`, { highlight: true });
+
                     frog.remove();
                     state.frogs.delete(frog);
                     document.getElementById('boss-hp-container').classList.remove('active');
@@ -1059,121 +1218,145 @@
             const frog = document.createElement('div');
             frog.className = 'frog';
             frog.dataset.type = selectedType;
-            
+
             const video = document.createElement('video');
             video.src = frogData.video;
             video.autoplay = true;
             video.loop = true;
             video.muted = true;
             video.playsInline = true;
+            video.style.borderColor = frogData.color;
             frog.appendChild(video);
-            
-            frog.querySelector('video').style.borderColor = frogData.color;
-            
+
+            const isShiny = Math.random() < state.shinyChance;
+            frog.dataset.shiny = isShiny;
+            if (isShiny) {
+                frog.classList.add('shiny');
+                logScore(`${frogData.name}의 이로치독두껍 출현!`, { highlight: true });
+            }
+
             document.body.appendChild(frog);
             state.frogs.add(frog);
             state.discovered.add(selectedType);
-            
+
+            const safeMarginX = Math.max(frogData.maxSize / 2 + 20, 120);
+            const safeMarginY = Math.max(frogData.maxSize / 2 + 20, 120);
+            const clampX = (value) => {
+                if (window.innerWidth <= safeMarginX * 2) {
+                    return window.innerWidth / 2;
+                }
+                return Math.min(Math.max(value, safeMarginX), window.innerWidth - safeMarginX);
+            };
+            const clampY = (value) => {
+                if (window.innerHeight <= safeMarginY * 2) {
+                    return window.innerHeight / 2;
+                }
+                return Math.min(Math.max(value, safeMarginY), window.innerHeight - safeMarginY);
+            };
+            const randomX = () => clampX(safeMarginX + Math.random() * Math.max(0, window.innerWidth - safeMarginX * 2));
+            const randomY = () => clampY(safeMarginY + Math.random() * Math.max(0, window.innerHeight - safeMarginY * 2));
+
             const side = Math.floor(Math.random() * 4);
             let startX, startY;
-            const margin = 50;
-            
+
             if (side === 0) {
-                startX = margin;
-                startY = margin + Math.random() * (window.innerHeight - margin * 2);
+                startX = clampX(safeMarginX);
+                startY = randomY();
             } else if (side === 1) {
-                startX = window.innerWidth - margin;
-                startY = margin + Math.random() * (window.innerHeight - margin * 2);
+                startX = clampX(window.innerWidth - safeMarginX);
+                startY = randomY();
             } else if (side === 2) {
-                startX = margin + Math.random() * (window.innerWidth - margin * 2);
-                startY = margin;
+                startX = randomX();
+                startY = clampY(safeMarginY);
             } else {
-                startX = margin + Math.random() * (window.innerWidth - margin * 2);
-                startY = window.innerHeight - margin;
+                startX = randomX();
+                startY = clampY(window.innerHeight - safeMarginY);
             }
-            
-            const centerX = window.innerWidth / 2;
-            const centerY = window.innerHeight / 2;
-            const targetX = centerX + (Math.random() - 0.5) * 400;
-            const targetY = centerY + (Math.random() - 0.5) * 400;
-            
+
+            const targetX = randomX();
+            const targetY = randomY();
+
             let size = frogData.size;
             let currentX = startX;
             let currentY = startY;
             let destroyed = false;
             let startTime = Date.now();
             let lastTeleport = startTime;
-            let danceOffset = 0;
             let flexTime = 0;
             let growFactor = 1;
             let rushSpeed = 0;
-            
+
             function animate() {
                 if (destroyed || !state.active || state.paused) return;
-                
+
                 const elapsed = Date.now() - startTime;
-                const progress = Math.min(elapsed / (frogData.lifespan - state.difficultyLevel * 200), 1);
-                
+                const adjustedLifespan = Math.max(800, frogData.lifespan - state.difficultyLevel * 200);
+                const progress = Math.min(elapsed / adjustedLifespan, 1);
+
                 let easeProgress = 1 - Math.pow(1 - progress, 3);
-                
-                // 각 두꺼비의 특수 행동 패턴
-                switch(frogData.behavior) {
-                    case 'teleport':
-                        if (Math.random() < 0.02) {
-                            currentX += (Math.random() - 0.5) * 300;
-                            currentY += (Math.random() - 0.5) * 300;
+
+                if (frogData.behavior === 'rush') {
+                    if (rushSpeed === 0) rushSpeed = 5 + Math.random() * 3;
+                    easeProgress = 1 - Math.pow(1 - progress, 5);
+                } else if (frogData.behavior === 'aggressive') {
+                    easeProgress = 1 - Math.pow(1 - progress, 4);
+                }
+
+                let nextX = startX + (targetX - startX) * easeProgress;
+                let nextY = startY + (targetY - startY) * easeProgress;
+
+                frog.style.animation = '';
+
+                switch (frogData.behavior) {
+                    case 'teleport': {
+                        const canTeleport = Date.now() - lastTeleport > 400 && Math.random() < (frogData.teleportChance || 0.25);
+                        if (canTeleport) {
+                            nextX = clampX(currentX + (Math.random() - 0.5) * 280);
+                            nextY = clampY(currentY + (Math.random() - 0.5) * 280);
                             frog.style.animation = 'teleport 0.2s';
+                            lastTeleport = Date.now();
                             setTimeout(() => frog.style.animation = '', 200);
                         }
                         break;
-                        
+                    }
                     case 'dance':
-                        danceOffset = Math.sin(elapsed / 200) * 50;
-                        currentX = startX + (targetX - startX) * easeProgress + danceOffset;
-                        currentY = startY + (targetY - startY) * easeProgress;
+                        nextX += Math.sin(elapsed / 200) * 50;
                         frog.style.animation = 'dance 0.5s infinite';
                         break;
-                        
                     case 'flex':
                         flexTime += 0.1;
-                        currentX = startX + (targetX - startX) * easeProgress + Math.sin(flexTime) * 30;
-                        currentY = startY + (targetY - startY) * easeProgress;
+                        nextX += Math.sin(flexTime) * 30;
                         frog.style.animation = 'flex 0.5s infinite';
                         break;
-                        
                     case 'growFast':
                         growFactor = 1 + progress * 2;
                         break;
-                        
-                    case 'rush':
-                        if (rushSpeed === 0) rushSpeed = 5 + Math.random() * 3;
-                        easeProgress = 1 - Math.pow(1 - progress, 5);
-                        break;
-                        
-                    case 'aggressive':
-                        easeProgress = 1 - Math.pow(1 - progress, 4);
-                        break;
-                        
                     case 'hypnotize':
                         if (Math.random() < 0.01) {
                             createSpecialEffect(currentX, currentY, 'hypnotize');
                         }
                         break;
-                        
                     default:
-                        // 기본 동작
-                        currentX = startX + (targetX - startX) * easeProgress;
-                        currentY = startY + (targetY - startY) * easeProgress;
+                        break;
                 }
-                
+
+                nextX = clampX(nextX);
+                nextY = clampY(nextY);
+
+                currentX = nextX;
+                currentY = nextY;
+
                 size = frogData.size + Math.pow(progress, 2) * (frogData.maxSize - frogData.size);
                 size *= growFactor;
-                
+                if (isShiny) {
+                    size *= 1.05;
+                }
+
                 frog.style.left = (currentX - size / 2) + 'px';
                 frog.style.top = (currentY - size / 2) + 'px';
                 frog.style.width = size + 'px';
                 frog.style.height = size + 'px';
-                
+
                 if (progress >= 1) {
                     destroyed = true;
                     frog.remove();
@@ -1181,24 +1364,24 @@
                     loseLife();
                     return;
                 }
-                
+
                 requestAnimationFrame(animate);
             }
-            
+
             animate();
-            
+
             frog.addEventListener('click', (e) => {
                 if (destroyed || !state.active || state.paused) return;
                 destroyed = true;
                 e.stopPropagation();
-                
+
                 // 효과음 재생
                 hitSound.currentTime = 0;
-                hitSound.play().catch(e => console.log("오디오 재생 오류:", e));
-                
-                createBloodParticles(currentX, currentY, 30);
+                hitSound.play().catch(err => console.log("오디오 재생 오류:", err));
+
+                createBloodParticles(currentX, currentY, isShiny ? 45 : 30);
                 screenShake();
-                
+
                 const now = Date.now();
                 if (now - state.lastHitTime < 1200) {
                     state.combo++;
@@ -1206,14 +1389,22 @@
                     state.combo = 1;
                 }
                 state.lastHitTime = now;
-                
+
+                const basePoints = isShiny ? Math.floor(frogData.points * 2) : frogData.points;
                 const comboMultiplier = 1 + Math.min(state.combo * 0.15, 2);
-                const earnedPoints = Math.floor(frogData.points * comboMultiplier);
-                
+                const earnedPoints = Math.floor(basePoints * comboMultiplier);
+
                 state.score += earnedPoints;
                 updateUI();
-                showScorePopup(currentX, currentY, earnedPoints, frogData.color);
-                
+
+                const popupColor = isShiny ? '#ffeb3b' : frogData.color;
+                showScorePopup(currentX, currentY, earnedPoints, popupColor);
+
+                const comboText = state.combo > 1 ? ` (콤보 x${state.combo})` : '';
+                logScore(`${frogData.name}${isShiny ? ' (이로치)' : ''} 격파! +${earnedPoints}점${comboText}`, {
+                    highlight: isShiny || state.combo > 1
+                });
+
                 frog.remove();
                 state.frogs.delete(frog);
             });
@@ -1223,7 +1414,8 @@
             state.lives--;
             state.combo = 0;
             updateUI();
-            
+            logScore(`생명 감소! 남은 목숨: ${Math.max(state.lives, 0)}`, { highlight: true });
+
             // 피격음 재생
             damageSound.currentTime = 0;
             damageSound.play().catch(e => console.log("오디오 재생 오류:", e));
@@ -1238,13 +1430,18 @@
 
         function increaseDifficulty() {
             if (!state.active || state.spawnDelay <= state.minSpawnDelay || state.paused) return;
+            const previousLevel = state.difficultyLevel;
             state.spawnDelay = Math.max(state.minSpawnDelay, state.spawnDelay - 30);
             state.difficultyLevel = Math.min(4, Math.floor((800 - state.spawnDelay) / 100));
-            
+
             clearInterval(spawnInterval);
             spawnInterval = setInterval(spawnFrog, state.spawnDelay);
-            
+
             updateUI();
+
+            if (state.difficultyLevel !== previousLevel) {
+                logScore(`난이도 상승! 현재 난이도: ${state.difficultyNames[state.difficultyLevel]}`, { highlight: true });
+            }
         }
 
         function updateGameTime() {
@@ -1268,8 +1465,9 @@
                 발견한 독두껍: <strong>${state.discovered.size}/15</strong><br>
                 최종 난이도: <strong>${state.difficultyNames[state.difficultyLevel]}</strong>
             `;
-            
+
             document.getElementById('game-over').classList.add('active');
+            logScore(`게임 종료! 최종 점수 ${state.score}점`, { highlight: true });
         }
 
         function startGame() {
@@ -1287,7 +1485,11 @@
             state.frogs.clear();
             state.gameTime = 0;
             state.difficultyLevel = 0;
-            
+            state.scoreLog = [];
+
+            renderScoreLog();
+            logScore('게임 시작!', { highlight: true });
+
             updateUI();
             document.getElementById('main-menu').style.display = 'none';
             document.getElementById('game-over').classList.remove('active');
