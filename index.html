@@ -1,1595 +1,2192 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>조랄두껍</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none;
-        }
-
-        body {
-            background: #000;
-            overflow: hidden;
-            font-family: 'Arial Black', sans-serif;
-            width: 100vw;
-            height: 100vh;
-            cursor: crosshair;
-            color: #fff;
-        }
-
-        /* UI */
-        #ui {
-            position: fixed;
-            top: 20px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 30px;
-            z-index: 1000;
-            pointer-events: none;
-        }
-
-        #score {
-            color: #fff;
-            font-size: 36px;
-            font-weight: 900;
-            text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
-            background: rgba(0, 0, 0, 0.5);
-            padding: 5px 15px;
-            border-radius: 10px;
-        }
-
-        #lives {
-            display: flex;
-            gap: 6px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 5px 10px;
-            border-radius: 10px;
-        }
-
-        .heart {
-            font-size: 28px;
-            filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.8));
-        }
-
-        .heart.lost {
-            opacity: 0.2;
-        }
-
-        /* 메인 메뉴 */
-        #main-menu {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.95);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-        }
-
-        #main-menu h1 {
-            font-size: 80px;
-            margin-bottom: 20px;
-            color: #fff;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
-            text-align: center;
-        }
-
-        #main-menu h2 {
-            font-size: 30px;
-            margin-bottom: 40px;
-            color: #ccc;
-            text-align: center;
-        }
-
-        .menu-btn {
-            padding: 15px 60px;
-            font-size: 24px;
-            background: #fff;
-            color: #000;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: 900;
-            transition: all 0.3s;
-            margin: 10px 0;
-            width: 300px;
-            text-align: center;
-        }
-
-        .menu-btn:hover {
-            background: #ffff00;
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(255, 255, 0, 0.5);
-        }
-
-        /* 도감 모달 - z-index를 가장 높게 설정 */
-        #collection-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.98);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 20000; /* 가장 높은 z-index로 설정 */
-        }
-
-        #collection-modal.active {
-            display: flex;
-        }
-
-        #collection-content {
-            width: 90%;
-            max-width: 900px;
-            max-height: 80vh;
-            background: #111;
-            border-radius: 20px;
-            padding: 30px;
-            overflow-y: auto;
-            border: 3px solid #333;
-            box-shadow: 0 0 50px rgba(255, 255, 255, 0.1);
-        }
-
-        #collection-content h2 {
-            color: #fff;
-            font-size: 32px;
-            margin-bottom: 20px;
-            text-align: center;
-            text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
-        }
-
-        .collection-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .collection-item {
-            background: #222;
-            border-radius: 12px;
-            padding: 15px;
-            border: 2px solid #444;
-            transition: all 0.3s;
-        }
-
-        .collection-item.discovered {
-            border-color: var(--item-color);
-            box-shadow: 0 0 20px var(--item-color);
-        }
-
-        .collection-item.locked {
-            opacity: 0.3;
-            background: #111;
-        }
-
-        .collection-item h3 {
-            color: #fff;
-            font-size: 20px;
-            margin-bottom: 8px;
-        }
-
-        .collection-item p {
-            color: #aaa;
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-
-        .collection-stats {
-            color: #888;
-            font-size: 12px;
-        }
-
-        .close-btn {
-            display: block;
-            margin: 20px auto 0;
-            padding: 12px 40px;
-            background: #fff;
-            color: #000;
-            border: none;
-            border-radius: 25px;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        /* 보스 HP 바 */
-        #boss-hp-container {
-            position: fixed;
-            top: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 600px;
-            display: none;
-            z-index: 2000;
-        }
-
-        #boss-hp-container.active {
-            display: block;
-        }
-
-        #boss-name {
-            color: #ff00ff;
-            font-size: 28px;
-            font-weight: 900;
-            text-align: center;
-            margin-bottom: 10px;
-            text-shadow: 0 0 20px #ff00ff;
-        }
-
-        #boss-hp-bar {
-            width: 100%;
-            height: 30px;
-            background: #222;
-            border-radius: 15px;
-            overflow: hidden;
-            border: 3px solid #ff00ff;
-            box-shadow: 0 0 30px rgba(255, 0, 255, 0.5);
-        }
-
-        #boss-hp-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ff00ff, #ff66ff);
-            transition: width 0.3s;
-            box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.5);
-        }
-
-        /* 개구리 */
-        .frog {
-            position: absolute;
-            cursor: pointer;
-            transition: filter 0.1s;
-            will-change: transform;
-        }
-
-        .frog:hover {
-            filter: brightness(1.4) drop-shadow(0 0 30px rgba(255, 255, 255, 0.9));
-        }
-
-        .frog.shiny {
-            filter: brightness(1.5) saturate(1.4) drop-shadow(0 0 30px rgba(255, 230, 102, 0.8));
-            animation: shinyPulse 1.2s infinite;
-        }
-
-        .frog.shiny::after {
-            content: '';
-            position: absolute;
-            inset: -12px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0) 60%);
-            opacity: 0.8;
-            pointer-events: none;
-            animation: sparkle 1.8s infinite;
-        }
-
-        .frog video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-            border: 3px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
-        }
-
-        .frog.shiny video {
-            border-color: #ffeb3b !important;
-            box-shadow: 0 0 35px rgba(255, 235, 59, 0.6);
-        }
-
-        .frog.boss video {
-            border: 5px solid #ff00ff;
-            box-shadow: 0 0 50px rgba(255, 0, 255, 1);
-            animation: bossPulse 1s infinite;
-        }
-
-        @keyframes bossPulse {
-            0%, 100% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.05); filter: brightness(1.5); }
-        }
-
-        @keyframes shinyPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.04); }
-        }
-
-        @keyframes sparkle {
-            0%, 100% { opacity: 0.4; transform: rotate(0deg) scale(1); }
-            50% { opacity: 1; transform: rotate(45deg) scale(1.1); }
-        }
-
-        /* 파티클 */
-        .blood-particle {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: #ff0000;
-            border-radius: 50%;
-            pointer-events: none;
-            box-shadow: 0 0 10px #ff0000;
-        }
-
-        /* 점수 팝업 */
-        .score-popup {
-            position: absolute;
-            color: #fff;
-            font-size: 40px;
-            font-weight: 900;
-            pointer-events: none;
-            z-index: 6000;
-            text-shadow: 0 0 20px currentColor;
-            animation: scoreFloat 0.8s ease-out forwards;
-        }
-
-        @keyframes scoreFloat {
-            to {
-                transform: translateY(-100px);
-                opacity: 0;
-            }
-        }
-
-        /* 화면 흔들림 */
-        @keyframes screenShake {
-            0%, 100% { transform: translate(0, 0) rotate(0); }
-            10% { transform: translate(-20px, 10px) rotate(-2deg); }
-            20% { transform: translate(20px, -10px) rotate(2deg); }
-            30% { transform: translate(-15px, -15px) rotate(-1deg); }
-            40% { transform: translate(15px, 15px) rotate(1deg); }
-            50% { transform: translate(-20px, 10px) rotate(-2deg); }
-            60% { transform: translate(20px, -10px) rotate(2deg); }
-            70% { transform: translate(-15px, -15px) rotate(-1deg); }
-            80% { transform: translate(15px, 15px) rotate(1deg); }
-            90% { transform: translate(-10px, 10px) rotate(-1deg); }
-        }
-
-        body.shake {
-            animation: screenShake 0.5s;
-        }
-
-        /* 플래시 (피격시) */
-        #damage-flash {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #fff;
-            display: none;
-            z-index: 8000;
-            pointer-events: none;
-            animation: damageFlash 0.3s;
-        }
-
-        #damage-flash.active {
-            display: block;
-        }
-
-        @keyframes damageFlash {
-            0%, 100% { opacity: 0; }
-            50% { opacity: 0.8; }
-        }
-
-        /* 게임오버 */
-        #game-over {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.95);
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 15000;
-            pointer-events: none;
-        }
-
-        #game-over.active {
-            display: flex;
-            pointer-events: auto;
-        }
-
-        #game-over h1 {
-            color: #ff3333;
-            font-size: 64px;
-            margin-bottom: 20px;
-            text-shadow: 0 0 30px rgba(255, 51, 51, 0.8);
-        }
-
-        #final-stats {
-            color: #fff;
-            font-size: 28px;
-            margin-bottom: 30px;
-            text-align: center;
-            line-height: 1.6;
-        }
-
-        .game-over-btn {
-            padding: 15px 40px;
-            font-size: 20px;
-            background: #fff;
-            color: #000;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: 700;
-            transition: all 0.3s;
-            margin: 10px;
-        }
-
-        .game-over-btn:hover {
-            background: #ffff00;
-            transform: translateY(-3px);
-        }
-
-        /* 콤보 표시 */
-        #combo-display {
-            position: fixed;
-            bottom: 30px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 24px;
-            color: #ffff00;
-            text-shadow: 0 0 15px rgba(255, 255, 0, 0.8);
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-            z-index: 1000;
-        }
-
-        #combo-display.active {
-            opacity: 1;
-        }
-
-        /* 점수 로그 */
-        #score-log-panel {
-            position: fixed;
-            right: 20px;
-            bottom: 20px;
-            width: 280px;
-            max-height: 45vh;
-            background: rgba(0, 0, 0, 0.75);
-            border: 2px solid rgba(255, 255, 255, 0.15);
-            border-radius: 14px;
-            padding: 18px 16px 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 1400;
-            backdrop-filter: blur(6px);
-            pointer-events: auto;
-        }
-
-        #score-log-panel h3 {
-            font-size: 18px;
-            color: #fff;
-            text-align: center;
-            text-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
-        }
-
-        #score-log {
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            padding-right: 4px;
-        }
-
-        #score-log::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        #score-log::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.25);
-            border-radius: 6px;
-        }
-
-        .log-entry {
-            background: rgba(255, 255, 255, 0.06);
-            border-left: 3px solid rgba(255, 255, 255, 0.2);
-            padding: 6px 8px;
-            border-radius: 10px;
-            font-size: 13px;
-            line-height: 1.4;
-            color: #eee;
-            box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.4);
-        }
-
-        .log-entry.highlight {
-            border-left-color: #ffeb3b;
-            box-shadow: 0 0 18px rgba(255, 235, 59, 0.35);
-            color: #fffbcc;
-        }
-
-        .log-entry .timestamp {
-            display: block;
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 2px;
-        }
-
-        /* 특수 효과 */
-        .special-effect {
-            position: absolute;
-            pointer-events: none;
-            z-index: 5000;
-        }
-
-        /* 난이도 표시 */
-        #difficulty-display {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #fff;
-            font-size: 18px;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 5px 15px;
-            border-radius: 10px;
-            z-index: 1000;
-            pointer-events: none;
-        }
-
-        /* 게임 일시정지 */
-        #pause-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            color: #fff;
-            font-size: 18px;
-            cursor: pointer;
-            border-radius: 8px;
-            z-index: 2000;
-            transition: all 0.3s;
-        }
-
-        #pause-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            transform: scale(1.05);
-        }
-
-        /* 일시정지 화면 */
-        #pause-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 19000;
-        }
-
-        #pause-screen.active {
-            display: flex;
-        }
-
-        #pause-screen h1 {
-            color: #fff;
-            font-size: 64px;
-            margin-bottom: 30px;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
-        }
-
-        .pause-btn {
-            padding: 15px 40px;
-            font-size: 20px;
-            background: #fff;
-            color: #000;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: 700;
-            transition: all 0.3s;
-            margin: 10px;
-        }
-
-        .pause-btn:hover {
-            background: #ffff00;
-            transform: translateY(-3px);
-        }
-
-        /* 두꺼비 특수 효과 애니메이션 */
-        @keyframes hypnotize {
-            0% { transform: scale(0.5); opacity: 1; }
-            100% { transform: scale(2); opacity: 0; }
-        }
-
-        @keyframes teleport {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(0.5); opacity: 0.5; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        @keyframes dance {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(5deg); }
-            75% { transform: rotate(-5deg); }
-        }
-
-        @keyframes flex {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>조랄두껍</title>
+  <style>
+    @font-face {
+      font-family: 'Paperozi';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-1Thin.woff2') format('woff2');
+      font-weight: 100;
+      font-display: swap;
+    }
+    
+    :root{
+      --glass: rgba(255,255,255,0.08);
+      --glass-2: rgba(255,255,255,0.15);
+      --ring: rgba(255,255,255,0.6);
+      --shadow: 0 10px 30px rgba(0,0,0,0.45);
+    }
+    
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    
+    html,body{height:100%}
+    
+    body{
+      background:#000; 
+      color:#fff; 
+      width:100vw; 
+      height:100vh; 
+      overflow:hidden;
+      font-family: 'Paperozi', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      cursor: crosshair;
+      touch-action: manipulation;
+    }
+    
+    #ui{
+      position:fixed; 
+      top:12px; 
+      left:0; 
+      right:0; 
+      display:flex; 
+      justify-content:space-between; 
+      align-items:center; 
+      padding:0 16px; 
+      z-index:1000; 
+      pointer-events:none;
+    }
+    
+    #score{
+      font-size:clamp(22px, 3.8vw, 36px); 
+      font-weight:900; 
+      padding:.25rem .75rem; 
+      border-radius:.75rem; 
+      background:var(--glass); 
+      backdrop-filter: blur(8px);
+      transition: transform 0.15s;
+    }
+    
+    #score.bump{
+      animation: scoreBump 0.3s;
+    }
+    
+    @keyframes scoreBump{
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+    
+    #lives{
+      display:flex; 
+      gap:6px; 
+      padding:.25rem .6rem; 
+      border-radius:.75rem; 
+      background:var(--glass); 
+      backdrop-filter: blur(8px);
+    }
+    
+    .heart{
+      font-size:clamp(20px,3.2vw,28px);
+      transition: all 0.3s;
+    }
+    
+    .heart.lost{
+      opacity:.25; 
+      filter:grayscale(1);
+      transform: scale(0.7);
+    }
+
+    #difficulty-display{
+      position:fixed; 
+      top:12px; 
+      left:50%; 
+      transform:translateX(-50%); 
+      z-index:1000; 
+      pointer-events:none; 
+      font-size:clamp(14px,2.5vw,18px); 
+      background:var(--glass); 
+      padding:.25rem .75rem; 
+      border-radius:.6rem; 
+      backdrop-filter: blur(8px);
+    }
+
+    #pause-btn{
+      position:fixed; 
+      bottom:16px; 
+      right:16px; 
+      padding:.65rem 1rem; 
+      border-radius:.75rem; 
+      font-size:clamp(14px,2.6vw,18px); 
+      background:var(--glass); 
+      border:2px solid rgba(255,255,255,.25); 
+      color:#fff; 
+      z-index:1200; 
+      cursor:pointer; 
+      transition:.3s; 
+      box-shadow:var(--shadow);
+      pointer-events:auto;
+    }
+    
+    #pause-btn:hover{
+      background:var(--glass-2); 
+      transform: translateY(-3px) scale(1.05);
+    }
+
+    .screen{
+      position:fixed; 
+      inset:0; 
+      display:none; 
+      justify-content:center; 
+      align-items:center; 
+      z-index:15000; 
+      background: rgba(0,0,0,.92);
+      animation: fadeIn 0.3s;
+    }
+    
+    .screen.active{display:flex}
+    
+    @keyframes fadeIn{
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .panel{
+      width:min(960px, 92vw); 
+      max-height:86vh; 
+      overflow:auto; 
+      background:#111; 
+      border:2px solid #333; 
+      border-radius:20px; 
+      padding:28px; 
+      box-shadow:0 0 50px rgba(255,255,255,.08);
+      animation: slideUp 0.4s ease-out;
+    }
+    
+    @keyframes slideUp{
+      from { 
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to { 
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #main-menu{
+      position:fixed; 
+      inset:0; 
+      display:flex; 
+      flex-direction:column; 
+      justify-content:center; 
+      align-items:center; 
+      background: rgba(0,0,0,.95); 
+      z-index:20000;
+    }
+    
+    #main-menu h1{
+      font-size:clamp(46px, 10vw, 80px); 
+      margin-bottom:10px; 
+      text-align:center;
+      animation: titleFloat 3s ease-in-out infinite;
+    }
+    
+    @keyframes titleFloat{
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    #main-menu h2{
+      font-size:clamp(16px, 4vw, 28px); 
+      margin-bottom:26px; 
+      color:#ccc; 
+      text-align:center;
+    }
+    
+    .menu-row{
+      display:flex; 
+      gap:12px; 
+      flex-wrap:wrap; 
+      justify-content:center;
+    }
+    
+    .menu-btn{
+      padding:14px 28px; 
+      font-size:clamp(16px,3.6vw,22px); 
+      font-weight:900; 
+      color:#000; 
+      background:#fff; 
+      border:none; 
+      border-radius:28px; 
+      cursor:pointer; 
+      transition:.3s; 
+      width:min(360px, 70vw); 
+      text-align:center; 
+      box-shadow:var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .menu-btn::before{
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255,255,0,0.5);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    
+    .menu-btn:hover::before{
+      width: 300px;
+      height: 300px;
+    }
+    
+    .menu-btn:hover{
+      background:#ffff00; 
+      transform:translateY(-4px) scale(1.02);
+      box-shadow:0 14px 30px rgba(255,255,0,.35);
+    }
+
+    #collection-modal{
+      position:fixed; 
+      inset:0; 
+      display:none; 
+      justify-content:center; 
+      align-items:center; 
+      z-index:22000; 
+      background:rgba(0,0,0,.96);
+    }
+    
+    #collection-modal.active{display:flex}
+    
+    #collection-content{
+      width:min(980px,92vw); 
+      max-height:86vh; 
+      overflow:auto; 
+      background:#111; 
+      border-radius:20px; 
+      padding:28px; 
+      border:2px solid #333; 
+      box-shadow:0 0 50px rgba(255,255,255,.1);
+    }
+    
+    #collection-content h2{
+      text-align:center; 
+      font-size:clamp(22px, 5vw, 32px);
+    }
+    
+    .collection-top{
+      display:flex; 
+      gap:12px; 
+      align-items:center; 
+      justify-content:space-between; 
+      flex-wrap:wrap; 
+      margin:10px 0 12px;
+    }
+    
+    .collection-progress{
+      font-size:14px; 
+      color:#bbb;
+    }
+    
+    .collection-controls{
+      display:flex; 
+      gap:8px; 
+      flex-wrap:wrap;
+    }
+    
+    .chip{
+      background:#1b1b1b; 
+      border:1px solid #333; 
+      padding:6px 10px; 
+      border-radius:999px; 
+      font-size:13px; 
+      cursor:pointer;
+      transition: all 0.25s;
+    }
+    
+    .chip:hover{
+      background:#2a2a2a;
+      transform: translateY(-2px);
+    }
+    
+    .chip.active{
+      background:#fff; 
+      color:#000;
+    }
+    
+    .collection-grid{
+      display:grid; 
+      grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); 
+      gap:14px; 
+      margin-top:10px;
+    }
+    
+    .collection-item{
+      background:#1a1a1a; 
+      border:2px solid #333; 
+      border-radius:14px; 
+      padding:12px; 
+      transition:.25s; 
+      display:flex; 
+      gap:10px;
+    }
+    
+    .collection-item.discovered{
+      border-color:var(--item-color);
+    }
+    
+    .collection-item.locked{
+      opacity:.35; 
+      filter:grayscale(1);
+    }
+    
+    .collection-item h3{
+      font-size:18px; 
+      margin-bottom:6px;
+    }
+    
+    .collection-item p{
+      font-size:13px; 
+      color:#aaa;
+    }
+    
+    .collection-stats{
+      font-size:12px; 
+      color:#8a8a8a; 
+      margin-top:6px;
+    }
+    
+    .thumb{
+      width:72px; 
+      height:72px; 
+      border-radius:12px; 
+      overflow:hidden; 
+      border:2px solid #333; 
+      flex:0 0 auto;
+    }
+    
+    .thumb video{
+      width:100%; 
+      height:100%; 
+      object-fit:cover;
+    }
+    
+    .close-btn, .pause-btn, .game-over-btn{
+      padding:12px 28px; 
+      border-radius:24px; 
+      background:#fff; 
+      color:#000; 
+      border:none; 
+      font-weight:800; 
+      cursor:pointer;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .close-btn{
+      display:block; 
+      margin:18px auto 0;
+    }
+    
+    .close-btn:hover, .pause-btn:hover, .game-over-btn:hover{
+      background:#ffff00; 
+      transform:translateY(-3px);
+    }
+
+    #boss-hp-container{
+      position:fixed; 
+      top:70px; 
+      left:50%; 
+      transform:translateX(-50%); 
+      width:min(680px,90vw); 
+      z-index:2000; 
+      display:none;
+    }
+    
+    #boss-hp-container.active{display:block}
+    
+    #boss-name{
+      text-align:center; 
+      font-size:clamp(20px, 4vw, 28px); 
+      font-weight:900; 
+      margin-bottom:8px; 
+      color:#ff00ff;
+    }
+    
+    #boss-hp-bar{
+      width:100%; 
+      height:26px; 
+      background:#222; 
+      border-radius:14px; 
+      overflow:hidden; 
+      border:3px solid #ff00ff;
+    }
+    
+    #boss-hp-fill{
+      height:100%; 
+      background: linear-gradient(90deg, #ff00ff, #ff66ff); 
+      transition:width .25s;
+    }
+
+    .frog{
+      position:absolute; 
+      cursor:pointer; 
+      transition: filter .1s; 
+      will-change: transform;
+    }
+    
+    .frog:hover{
+      filter: brightness(1.35);
+    }
+    
+    .frog video{
+      width:100%; 
+      height:100%; 
+      object-fit:cover; 
+      border-radius:50%; 
+      border:3px solid rgba(255,255,255,.4); 
+      box-shadow:0 4px 20px rgba(0,0,0,.7);
+    }
+    
+    .frog.boss video{
+      border:5px solid #ff00ff; 
+      animation: bossPulse 1s infinite;
+    }
+    
+    /* 이로치독 효과 */
+    .frog.shiny video{
+      filter: brightness(1.6) saturate(1.8);
+      border:4px solid #FFD700;
+      box-shadow:0 0 35px #FFD700, 0 0 60px rgba(255,215,0,0.6);
+      animation: shinyPulse 0.8s infinite;
+    }
+    
+    /* 이로치독 파티클 - 최적화 */
+    .shiny-particle{
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: #FFD700;
+      border-radius: 50%;
+      pointer-events: none;
+      box-shadow: 0 0 8px #FFD700;
+      animation: shinyFloat 1.5s ease-in-out forwards;
+    }
+    
+    @keyframes shinyFloat{
+      0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 0;
+      }
+      20% {
+        opacity: 1;
+      }
+      80% {
+        opacity: 0.5;
+      }
+      100% {
+        transform: translate(var(--tx), var(--ty)) scale(0);
+        opacity: 0;
+      }
+    }
+    
+    @keyframes shinyPulse{
+      0%,100%{
+        filter: brightness(1.6) saturate(1.8);
+        box-shadow:0 0 35px #FFD700, 0 0 60px rgba(255,215,0,0.6);
+      } 
+      50%{
+        filter: brightness(2.0) saturate(2.2);
+        box-shadow:0 0 50px #FFD700, 0 0 80px rgba(255,215,0,0.8);
+      }
+    }
+    
+    @keyframes bossPulse{
+      0%,100%{transform:scale(1); filter:brightness(1)} 
+      50%{transform:scale(1.05); filter:brightness(1.5)}
+    }
+
+    .blood-particle{
+      position:absolute; 
+      width:8px; 
+      height:8px; 
+      background:#ff0000; 
+      border-radius:50%; 
+      pointer-events:none; 
+      box-shadow:0 0 10px #ff0000;
+    }
+    
+    /* 타격 링 이펙트 */
+    .hit-ring{
+      position: absolute;
+      border: 3px solid #fff;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: ringExpand 0.6s ease-out forwards;
+    }
+    
+    @keyframes ringExpand{
+      from {
+        width: 20px;
+        height: 20px;
+        opacity: 1;
+        transform: translate(-50%, -50%);
+      }
+      to {
+        width: 200px;
+        height: 200px;
+        opacity: 0;
+        transform: translate(-50%, -50%);
+      }
+    }
+
+    .score-popup{
+      position:absolute; 
+      color:#fff; 
+      font-size:clamp(24px, 4.8vw, 40px); 
+      font-weight:900; 
+      pointer-events:none; 
+      z-index:6000; 
+      animation: scoreFloat .8s ease-out forwards;
+    }
+    
+    @keyframes scoreFloat{
+      to{transform:translateY(-100px); opacity:0}
+    }
+
+    @keyframes screenShake{
+      0%,100%{transform:translate(0,0) rotate(0)} 
+      10%{transform:translate(-18px,10px) rotate(-2deg)} 
+      20%{transform:translate(18px,-10px) rotate(2deg)} 
+      30%{transform:translate(-12px,-12px) rotate(-1deg)} 
+      40%{transform:translate(12px,12px) rotate(1deg)} 
+      50%{transform:translate(-18px,10px) rotate(-2deg)} 
+      60%{transform:translate(18px,-10px) rotate(2deg)} 
+      70%{transform:translate(-12px,-12px) rotate(-1deg)} 
+      80%{transform:translate(12px,12px) rotate(1deg)} 
+      90%{transform:translate(-10px,10px) rotate(-1deg)}
+    }
+    
+    body.shake{animation: screenShake .5s}
+
+    /* 대미지 효과 - 두껍 풀스크린 */
+    #damage-flash{
+      position:fixed; 
+      inset:0; 
+      display:none; 
+      z-index:8000; 
+      pointer-events:none;
+      background:#000;
+    }
+    
+    #damage-flash.active{display:block}
+    
+    #damage-flash video{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      opacity:0.9;
+    }
+    
+    #damage-text{
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%, -50%);
+      font-size:clamp(60px, 15vw, 150px);
+      font-weight:900;
+      color:#ff0000;
+      text-shadow: 0 0 30px #ff0000, 0 0 60px #ff0000;
+      z-index:8001;
+      animation: damageFlicker 0.1s steps(1) 5;
+    }
+    
+    @keyframes damageFlicker{
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    #game-over{
+      position:fixed; 
+      inset:0; 
+      display:none; 
+      flex-direction:column; 
+      justify-content:center; 
+      align-items:center; 
+      z-index:15000; 
+      background: rgba(0,0,0,.94);
+    }
+    
+    #game-over.active{display:flex}
+    
+    #game-over h1{
+      color:#ff3333; 
+      font-size:clamp(34px, 8vw, 64px); 
+      margin-bottom:12px;
+    }
+    
+    #final-stats{
+      font-size:clamp(16px, 3.2vw, 26px); 
+      margin-bottom:16px; 
+      line-height:1.6; 
+      text-align:center;
+    }
+    
+    .game-over-btn{
+      font-size:clamp(14px, 3.2vw, 20px); 
+      margin:6px; 
+      box-shadow:var(--shadow);
+    }
+
+    #combo-display{
+      position:fixed; 
+      bottom:22px; 
+      left:0; 
+      right:0; 
+      text-align:center; 
+      font-size:clamp(16px, 3.4vw, 24px); 
+      color:#ffff00; 
+      opacity:0; 
+      transition:.25s; 
+      pointer-events:none; 
+      z-index:1000;
+    }
+    
+    #combo-display.active{opacity:1}
+
+    #pause-screen{
+      position:fixed; 
+      inset:0; 
+      display:none; 
+      flex-direction:column; 
+      justify-content:center; 
+      align-items:center; 
+      z-index:19000; 
+      background: rgba(0,0,0,.8);
+    }
+    
+    #pause-screen.active{display:flex}
+    
+    #pause-screen h1{
+      font-size:clamp(32px, 8vw, 64px); 
+      margin-bottom:16px;
+    }
+    
+    .pause-btn{
+      font-size:clamp(14px, 3.2vw, 20px); 
+      font-weight:700; 
+      margin:8px;
+    }
+
+    .special-effect{
+      position:absolute; 
+      pointer-events:none; 
+      z-index:5000;
+    }
+    
+    @keyframes hypnotize{
+      0%{transform:scale(.5); opacity:1} 
+      100%{transform:scale(2); opacity:0}
+    }
+    
+    @keyframes teleport{
+      0%{transform:scale(1); opacity:1} 
+      50%{transform:scale(.5); opacity:.5} 
+      100%{transform:scale(1); opacity:1}
+    }
+    
+    @keyframes dance{
+      0%,100%{transform:rotate(0)} 
+      25%{transform:rotate(5deg)} 
+      75%{transform:rotate(-5deg)}
+    }
+    
+    @keyframes flex{
+      0%,100%{transform:scale(1)} 
+      50%{transform:scale(1.2)}
+    }
+
+    .modal{
+      position:fixed; 
+      inset:0; 
+      display:none; 
+      justify-content:center; 
+      align-items:center; 
+      z-index:21000; 
+      background: rgba(0,0,0,.9);
+    }
+    
+    .modal.active{display:flex}
+    .modal .panel h2{margin-bottom:8px}
+    
+    .row{
+      display:flex; 
+      gap:10px; 
+      align-items:center; 
+      flex-wrap:wrap;
+    }
+    
+    .label{
+      font-size:14px; 
+      color:#ccc;
+    }
+    
+    .range{width:min(340px, 70vw)}
+    
+    .switch{
+      appearance:none; 
+      width:46px; 
+      height:26px; 
+      background:#333; 
+      border-radius:999px; 
+      position:relative; 
+      outline:none; 
+      cursor:pointer;
+      transition: 0.3s;
+    }
+    
+    .switch::after{
+      content:''; 
+      position:absolute; 
+      top:3px; 
+      left:3px; 
+      width:20px; 
+      height:20px; 
+      border-radius:50%; 
+      background:#999; 
+      transition:.2s;
+    }
+    
+    .switch:checked{background:#09f}
+    
+    .switch:checked::after{
+      left:23px; 
+      background:#fff;
+    }
+
+    #touch-hint{
+      position:fixed; 
+      bottom:80px; 
+      left:50%; 
+      transform:translateX(-50%); 
+      background:var(--glass); 
+      backdrop-filter: blur(8px); 
+      border:1px solid #333; 
+      padding:8px 12px; 
+      border-radius:999px; 
+      font-size:13px; 
+      opacity:0; 
+      pointer-events:none; 
+      transition:.4s; 
+      z-index:1200;
+    }
+    
+    #touch-hint.show{opacity:1}
+
+    #score-log{
+      margin-top:16px;
+      max-height:300px;
+      overflow-y:auto;
+      background:#0a0a0a;
+      border:1px solid #333;
+      border-radius:12px;
+      padding:12px;
+    }
+    
+    #score-log h3{
+      font-size:18px;
+      margin-bottom:10px;
+      text-align:center;
+    }
+    
+    .log-entry{
+      padding:8px;
+      margin-bottom:6px;
+      background:#1a1a1a;
+      border-radius:8px;
+      font-size:14px;
+      display:flex;
+      justify-content:space-between;
+      border-left:3px solid #666;
+    }
+    
+    .log-entry.top{
+      border-left-color:#FFD700;
+      background:#1f1a0a;
+    }
+
+    /* 디버그 모드 */
+    #debug-panel{
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.95);
+      border-top: 2px solid #333;
+      padding: 16px;
+      z-index: 25000;
+      display: none;
+      max-height: 40vh;
+      overflow-y: auto;
+    }
+    
+    #debug-panel.active{
+      display: block;
+    }
+    
+    #debug-panel h3{
+      color: #0f0;
+      margin-bottom: 12px;
+      font-size: 18px;
+    }
+    
+    .debug-controls{
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    
+    .debug-btn{
+      padding: 8px 16px;
+      background: #222;
+      border: 1px solid #444;
+      color: #0f0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: 0.2s;
+    }
+    
+    .debug-btn:hover{
+      background: #333;
+      border-color: #0f0;
+    }
+    
+    .debug-btn.active{
+      background: #0f0;
+      color: #000;
+    }
+    
+    .frog-spawner{
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .spawn-btn{
+      padding: 10px;
+      background: #1a1a1a;
+      border: 2px solid #333;
+      color: #fff;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .spawn-btn:hover{
+      background: #2a2a2a;
+      border-color: #666;
+      transform: translateY(-2px);
+    }
+
+    @supports(padding:max(0px)){
+      body{padding-bottom: max(env(safe-area-inset-bottom), 0px)}
+    }
+  </style>
 </head>
 <body>
-    <div id="ui">
-        <div id="score">0</div>
-        <div id="lives">
-            <span class="heart">❤️</span>
-            <span class="heart">❤️</span>
-            <span class="heart">❤️</span>
-        </div>
+  <div id="ui">
+    <div id="score">0</div>
+    <div id="lives">
+      <span class="heart">❤️</span>
+      <span class="heart">❤️</span>
+      <span class="heart">❤️</span>
+      <span class="heart">❤️</span>
+      <span class="heart">❤️</span>
     </div>
+  </div>
+  <div id="difficulty-display">난이도: 초급</div>
+  <div id="boss-hp-container">
+    <div id="boss-name">🌟 마왕껍 🌟</div>
+    <div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
+  </div>
+  <div id="damage-flash">
+    <video id="damage-video" muted playsinline></video>
+    <div id="damage-text"></div>
+  </div>
+  <div id="combo-display">콤보 x<span id="combo-count">0</span></div>
+  <button id="pause-btn" aria-label="일시정지">일시정지</button>
+  <div id="touch-hint">TIP: 독두껍들을 눌러서 처치하세요!</div>
 
-    <div id="difficulty-display">난이도: 초급</div>
-
-    <div id="boss-hp-container">
-        <div id="boss-name">🌟 여유껍 🌟</div>
-        <div id="boss-hp-bar">
-            <div id="boss-hp-fill"></div>
-        </div>
-    </div>
-
-    <div id="damage-flash"></div>
-
-    <div id="combo-display">콤보 x<span id="combo-count">0</span></div>
-
-    <div id="score-log-panel">
-        <h3>점수 로그</h3>
-        <div id="score-log"></div>
-    </div>
-
-    <button id="pause-btn">일시정지</button>
-
-    <div id="pause-screen">
-        <h1>일시정지</h1>
+  <div id="pause-screen" class="screen">
+    <div class="panel">
+      <h1>일시정지</h1>
+      <div class="menu-row">
         <button class="pause-btn" id="resume-btn">계속</button>
         <button class="pause-btn" id="pause-collection-btn">도감</button>
+        <button class="pause-btn" id="pause-settings-btn">설정</button>
         <button class="pause-btn" id="pause-main-menu-btn">메뉴</button>
+      </div>
     </div>
+  </div>
 
-    <div id="main-menu">
-        <h1>조랄두껍</h1>
-        <h2>독두껍들을 클릭해서 잡아라!!!!!@</h2>
-        <button class="menu-btn" id="start-btn">게임시작</button>
-        <button class="menu-btn" id="collection-menu-btn">도감</button>
-        <button class="menu-btn" id="how-to-play-btn">방법</button>
+  <div id="main-menu">
+    <h1>조랄두껍</h1>
+    <h2>독두껍들을 잡아라!</h2>
+    <div class="menu-row">
+      <button class="menu-btn" id="start-btn">게임 시작</button>
+      <button class="menu-btn" id="collection-menu-btn">도감</button>
+      <button class="menu-btn" id="how-to-play-btn">방법</button>
+      <button class="menu-btn" id="settings-menu-btn">설정</button>
     </div>
+    <div style="margin-top:14px; font-size:14px; color:#bbb" id="highscore-label">최고 점수: 0</div>
+  </div>
 
-    <div id="collection-modal">
-        <div id="collection-content">
-            <h2>두껍 도감</h2>
-            <div class="collection-grid" id="collection-grid"></div>
-            <button class="close-btn" id="close-collection">닫기</button>
-        </div>
+  <div id="collection-modal" class="modal">
+    <div id="collection-content" class="panel">
+      <h2>두껍 도감</h2>
+      <div class="collection-top">
+        <div class="collection-progress" id="collection-progress">발견 0 / 16 (0%)</div>
+        <div class="collection-controls">
+          <span class="chip active" data-filter="all">전체</span>
+          <span class="chip" data-filter="easy">쉬움</span>
+          <span class="chip" data-filter="hard">어려움</span>
+          <span class="chip" data-filter="rare">레어</span>
+        <li>빠르게 연속으로 잡으면 <strong>콤보</strong>가 올라가고 점수 보너스
+        <li>놓치면 <strong>하트 1개</strong>가 사라짐. 하트 0개면 게임오버
+        <li>일부 두껍은 <strong>순간이동/돌진/최면</strong> 등 특수 행동을 함
+        <li>보스가 나오면 <strong>HP를 0</strong>으로 만들어야한다!
+        <li><strong style="color:#FFD700">✨ 이로치독두껍</strong>: 5% 확율로 점수 2.5배
+      </ol>
+      <p style="margin-top:10px; color:#bbb">모든 진행도와 도감은 자동 저장됨. 설정에서 초기화 가능</p>
+      <div class="menu-row" style="margin-top:10px">
+        <button class="pause-btn" id="howto-close">닫기</button>
+      </div>
     </div>
+  </div>
 
-    <div id="game-over">
-        <h1>두껍에게 당했습니다...</h1>
-        <div id="final-stats"></div>
-        <button class="game-over-btn" id="restart-btn">다시시작</button>
-        <button class="game-over-btn" id="collection-gameover-btn">도감</button>
-        <button class="game-over-btn" id="main-menu-btn">메뉴</button>
+  <div id="settings-modal" class="modal">
+    <div class="panel">
+      <h2>설정</h2>
+      <div class="row" style="margin:8px 0 14px">
+        <span class="label">효과음</span>
+        <input type="checkbox" id="sfx-toggle" class="switch" />
+        <input type="range" id="sfx-volume" class="range" min="0" max="1" step="0.01" />
+        <span id="sfx-vol-label" class="label">100%</span>
+      </div>
+      <div class="row" style="margin:8px 0 14px">
+        <span class="label">진동 (모바일)</span>
+        <input type="checkbox" id="vibe-toggle" class="switch" />
+        <span class="label">타격시 짧게 진동</span>
+      </div>
+      <div class="row" style="margin:8px 0 14px">
+        <span class="label">데이터</span>
+        <button class="pause-btn" id="export-btn">내보내기</button>
+        <button class="pause-btn" id="import-btn">가져오기</button>
+        <button class="pause-btn" id="reset-btn" style="background:#ffdad7">초기화</button>
+      </div>
+      <div class="menu-row" style="margin-top:8px">
+        <button class="pause-btn" id="settings-close">닫기</button>
+      </div>
     </div>
+  </div>
 
-    <script>
-        const state = {
-            score: 0,
-            lives: 3,
-            combo: 0,
-            active: false,
-            paused: false,
-            startTime: 0,
-            lastHitTime: 0,
-            spawnDelay: 800,
-            minSpawnDelay: 300,
-            frogs: new Set(),
-            discovered: new Set(),
-            bossActive: false,
-            bossHP: 0,
-            maxBossHP: 0,
-            bossFrog: null,
-            gameTime: 0,
-            difficultyLevel: 0,
-            difficultyNames: ['초급', '중급', '고급', '고수', '지옥','지랄','게이','두껍','울티메이트두껍레전드'],
-            scoreLog: [],
-            shinyChance: 0.07
-        };
+  <div id="score-log-modal" class="modal">
+    <div class="panel">
+      <h2>점수 기록</h2>
+      <div id="score-log"></div>
+      <button class="close-btn" id="close-score-log">닫기</button>
+    </div>
+  </div>
 
-        // 효과음 로드
-        const hitSound = new Audio('https://www.myinstants.com/media/sounds/tuco-get-out.mp3');
-        const damageSound = new Audio('https://www.myinstants.com/media/sounds/shocked-sound-effect.mp3');
-        
-        // 볼륨 설정
-        hitSound.volume = 0.3;
-        damageSound.volume = 0.5;
+  <div id="debug-panel">
+    <h3>🐸 DEBUG MODE</h3>
+    <div class="debug-controls">
+      <button class="debug-btn" id="toggle-random-spawn">랜덤 스폰: ON</button>
+      <button class="debug-btn" id="clear-all-frogs">모두 제거</button>
+    </div>
+    <h4 style="color:#888; margin-top:8px; margin-bottom:8px; font-size:14px;">두껍 수동 스폰:</h4>
+    <div class="frog-spawner" id="frog-spawner"></div>
+  </div>
 
-        // 효과음 미리 로드
-        hitSound.load();
-        damageSound.load();
+  <script>
+  const STORAGE_KEY = 'joraldukkup.save.v2';
+  const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+  
+  let SAVE = {
+    highScore: 0,
+    discovered: {},
+    totals: { hits: 0, misses: 0, bossesDefeated: 0, shinyCaught: 0 },
+    stats: {},
+    gameHistory: [],
+    settings: { sfx: true, sfxVol: 0.7, vibration: true }
+  };
+  
+  function loadSave(){
+    try { 
+      const raw = localStorage.getItem(STORAGE_KEY); 
+      if(raw){ 
+        const parsed = JSON.parse(raw); 
+        SAVE = Object.assign({}, SAVE, parsed);
+        if(!SAVE.gameHistory) SAVE.gameHistory = [];
+      }
+    } catch(e){ 
+      console.warn('로드 실패', e) 
+    }
+    
+    document.getElementById('highscore-label').textContent = `최고 점수: ${SAVE.highScore || 0}`;
+    document.getElementById('sfx-toggle').checked = !!SAVE.settings.sfx;
+    document.getElementById('sfx-volume').value = SAVE.settings.sfxVol ?? 0.7;
+    document.getElementById('sfx-vol-label').textContent = `${Math.round((SAVE.settings.sfxVol ?? 0.7)*100)}%`;
+    document.getElementById('vibe-toggle').checked = !!SAVE.settings.vibration;
+  }
+  
+  function saveNow(){ 
+    try{ 
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(SAVE)); 
+    }catch(e){ 
+      console.warn('저장 실패', e) 
+    } 
+  }
+  
+  function debounce(fn, ms){ 
+    let t; 
+    return (...a)=>{ 
+      clearTimeout(t); 
+      t = setTimeout(()=>fn.apply(null,a), ms)
+    } 
+  }
+  const saveDebounced = debounce(saveNow, 250);
 
-        const frogTypes = {
-            chingu: {
-                name: '친구껍',
-                video: 'https://media.tenor.com/qSQ3mTn58vgAAAPo/frog-eat.mp4',
-                lifespan: 2500,
-                points: 15,
-                size: 60,
-                maxSize: 280,
-                spawnChance: 0.12,
-                color: '#4CAF50',
-                description: '배고픈 친구. 먹이를 찾고있다.',
-                behavior: 'normal'
-            },
-            ggamnol: {
-                name: '깜놀껍',
-                video: 'https://media.tenor.com/_wfKmsxm0HgAAAPo/souichi-tsujii-sayuri.mp4',
-                lifespan: 1200,
-                points: 40,
-                size: 50,
-                maxSize: 200,
-                spawnChance: 0.08,
-                color: '#9C27B0',
-                description: '순간이동하며 깜짝놀래킨다!',
-                behavior: 'teleport',
-                teleportChance: 0.3
-            },
-            dance: {
-                name: '댄스껍',
-                video: 'https://media.tenor.com/XxZQsifhe0AAAAPo/frog-toad.mp4',
-                lifespan: 2800,
-                points: 20,
-                size: 55,
-                maxSize: 300,
-                spawnChance: 0.11,
-                color: '#00BCD4',
-                description: '춤추는 걸 좋아하는 흥많은 두껍',
-                behavior: 'dance'
-            },
-            eungdi: {
-                name: '응디껍',
-                video: 'https://media.tenor.com/7b3eYQD9moQAAAPo/frog-toad-flex-twerk.mp4',
-                lifespan: 2600,
-                points: 25,
-                size: 50,
-                maxSize: 290,
-                spawnChance: 0.10,
-                color: '#FF5722',
-                description: '자신감 넘치는 근육질 두껍',
-                behavior: 'flex'
-            },
-            ddungbo: {
-                name: '뚱보껍',
-                video: 'https://media.tenor.com/uvuwfwB8VrQAAAPo/frog-frogs.mp4',
-                lifespan: 3200,
-                points: 30,
-                size: 70,
-                maxSize: 400,
-                spawnChance: 0.09,
-                color: '#8BC34A',
-                description: '느리지만 거대하다. 맞추기 쉽다.',
-                behavior: 'slow'
-            },
-            nuclear: {
-                name: '핵독껍',
-                video: 'https://media.tenor.com/GEjoMjVhYuMAAAPo/futurama-hypnotoad.mp4',
-                lifespan: 2000,
-                points: 100,
-                size: 45,
-                maxSize: 250,
-                spawnChance: 0.03,
-                color: '#FFD700',
-                description: '최면 능력 보유',
-                behavior: 'hypnotize'
-            },
-            shinnan: {
-                name: '신난두껍',
-                video: 'https://media.tenor.com/tLf4YbvzJ6sAAAPo/yee-toad.mp4',
-                lifespan: 2400,
-                points: 18,
-                size: 52,
-                maxSize: 270,
-                spawnChance: 0.12,
-                color: '#FFEB3B',
-                description: '항상 신나있는 긍정적인두껍',
-                behavior: 'excited'
-            },
-            sinsa: {
-                name: '신사껍',
-                video: 'https://media.tenor.com/ZYmQDoqtUN4AAAPo/colonel-toad.mp4',
-                lifespan: 2700,
-                points: 35,
-                size: 58,
-                maxSize: 310,
-                spawnChance: 0.08,
-                color: '#795548',
-                description: '품위있는신사. 느리게 움직인다.',
-                behavior: 'gentleman'
-            },
-            eogul: {
-                name: '억울껍',
-                video: 'https://media.tenor.com/Dxp0w3YjOjkAAAPo/frog-sitting.mp4',
-                lifespan: 2300,
-                points: 22,
-                size: 54,
-                maxSize: 280,
-                spawnChance: 0.10,
-                color: '#607D8B',
-                description: '억울한 표정의 두껍. 불쌍하다.',
-                behavior: 'sad'
-            },
-            dwae: {
-                name: '돼공껍',
-                video: 'https://media.tenor.com/4uQqOK2AQrwAAAPo/10th-kingdom-frogs.mp4',
-                lifespan: 1800,
-                points: 45,
-                size: 48,
-                maxSize: 220,
-                spawnChance: 0.07,
-                color: '#E91E63',
-                description: '급격히커지는변이두껍!',
-                behavior: 'growFast'
-            },
-            sibi: {
-                name: '시비껍',
-                video: 'https://media.tenor.com/TO7MRzBkquMAAAPo/rawr-thumb.mp4',
-                lifespan: 1500,
-                points: 50,
-                size: 42,
-                maxSize: 190,
-                spawnChance: 0.06,
-                color: '#FF1744',
-                description: '공격적이고 빠른 두껍.',
-                behavior: 'aggressive'
-            },
-            flower: {
-                name: '꽃두껍',
-                video: 'https://media.tenor.com/40xvCEgMIj4AAAPo/twerg45-toad.mp4',
-                lifespan: 2900,
-                points: 28,
-                size: 56,
-                maxSize: 295,
-                spawnChance: 0.09,
-                color: '#E1BEE7',
-                description: '꽃처럼 아름다운 두껍',
-                behavior: 'flower'
-            },
-            rapper: {
-                name: '레퍼껍',
-                video: 'https://media.tenor.com/Kx3RklAD3-MAAAPo/toad-frog.mp4',
-                lifespan: 1600,
-                points: 38,
-                size: 46,
-                maxSize: 210,
-                spawnChance: 0.07,
-                color: '#9575CD',
-                description: '리듬을 탄다. 잡기 힘들다',
-                behavior: 'rap'
-            },
-            rush: {
-                name: '돌격껍',
-                video: 'https://media.tenor.com/3ymk3wPLjUwAAAPo/toad.mp4',
-                lifespan: 1100,
-                points: 60,
-                size: 40,
-                maxSize: 180,
-                spawnChance: 0.05,
-                color: '#F44336',
-                description: '초고속 돌진! 맞추기 어렵다.',
-                behavior: 'rush'
-            },
-            boss: {
-                name: '여유껍',
-                video: 'https://media.tenor.com/97gH8VzfSMQAAAPo/poke-frog.mp4',
-                lifespan: 999999,
-                points: 500,
-                size: 80,
-                maxSize: 450,
-                spawnChance: 0.002,
-                color: '#ff00ff',
-                description: '전설의 끝판왕두껍. 절대 아무나 못건들인다',
-                behavior: 'boss'
-            }
-        };
+  function addGameRecord(score, time, difficulty, shinyCaught){
+    const record = {
+      score: score,
+      time: time,
+      difficulty: difficulty,
+      shinyCaught: shinyCaught,
+      date: new Date().toLocaleString('ko-KR')
+    };
+    
+    SAVE.gameHistory.unshift(record);
+    if(SAVE.gameHistory.length > 10) SAVE.gameHistory = SAVE.gameHistory.slice(0, 10);
+    saveNow();
+  }
 
-        let spawnInterval, difficultyInterval, gameTimeInterval;
-        const scoreLogElement = document.getElementById('score-log');
-        const MAX_LOG_ENTRIES = 40;
+  function showScoreLog(){
+    const logDiv = document.getElementById('score-log');
+    
+    if(SAVE.gameHistory.length === 0){
+      logDiv.innerHTML = '<p style="text-align:center; color:#888;">아직 기록이 없습니다</p>';
+    } else {
+      let html = '<h3>최근 10게임 기록</h3>';
+      SAVE.gameHistory.forEach((record, idx) => {
+        const isTop = record.score === SAVE.highScore;
+        html += `<div class="log-entry ${isTop ? 'top' : ''}">
+          <span>${idx + 1}. ${record.date}</span>
+          <span>점수: <strong>${record.score}</strong> | ${record.time}초 | ${record.difficulty}${record.shinyCaught > 0 ? ' | ✨' + record.shinyCaught : ''}</span>
+        </div>`;
+      });
+      logDiv.innerHTML = html;
+    }
+    
+    document.getElementById('score-log-modal').classList.add('active');
+  }
 
-        function formatLogTime(timestamp = Date.now()) {
-            if (!state.startTime) return '00:00';
-            const elapsed = Math.max(0, timestamp - state.startTime);
-            const totalSeconds = Math.floor(elapsed / 1000);
-            const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-            const seconds = String(totalSeconds % 60).padStart(2, '0');
-            return `${minutes}:${seconds}`;
+  // 오디오 시스템
+  const uiClickSound = new Audio('https://www.myinstants.com/media/sounds/voice_sans.mp3');
+  const hitSound = new Audio('https://github.com/OCGK123/Poision-Toad/raw/refs/heads/main/Toad.mp3');
+  const spawnSound = new Audio('https://www.myinstants.com/media/sounds/whoosh-wind.mp3');
+  
+  const damageSounds = [
+    'https://www.myinstants.com/media/sounds/metal-pipe-clang.mp3',
+    'https://www.myinstants.com/media/sounds/gay-meme.mp3',
+    'https://www.myinstants.com/media/sounds/vine-boom-sound-effect_KT89XIq.mp3',
+    'https://www.myinstants.com/media/sounds/ralro-ggocuddaera.mp3',
+    'https://www.myinstants.com/media/sounds/cat-laugh-meme-1.mp3',
+    'https://www.myinstants.com/media/sounds/rizz-sound-effect.mp3',
+    'https://www.myinstants.com/media/sounds/spongebob-fail.mp3',
+    'https://www.myinstants.com/media/sounds/67_SQlv2Xv.mp3',
+    'https://www.myinstants.com/media/sounds/stationary-kill_gDwMUvN.mp3',
+    'https://www.myinstants.com/media/sounds/allahu-akbar_ffRVW9R.mp3',
+    'https://www.myinstants.com/media/sounds/taco-bell-bong-sfx.mp3',
+    'https://www.myinstants.com/media/sounds/mweohano-hahaha-jiko.mp3',
+    'https://www.myinstants.com/media/sounds/stagger-limbus-company.mp3'
+  ];
+  
+  const deathSounds = [
+    'https://www.myinstants.com/media/sounds/misyeonsilpae.mp3',
+    'https://www.myinstants.com/media/sounds/yt1s_ETil2rU.mp3',
+    'https://www.myinstants.com/media/sounds/you-died-wii-sports.mp3',
+    'https://www.myinstants.com/media/sounds/wa-giga-maghino.mp3',
+    'https://www.myinstants.com/media/sounds/jabassjyo.mp3',
+    'https://www.myinstants.com/media/sounds/m_fixed_NhtUtmT.mp3',
+    'https://www.myinstants.com/media/sounds/baby-laughing-meme.mp3',
+    'https://www.myinstants.com/media/sounds/ralro-jalhaesseunigga-bwajweoing.mp3',
+    'https://www.myinstants.com/media/sounds/ocean-meme.mp3',
+    'https://www.myinstants.com/media/sounds/romanceeeeeeeeeeeeee.mp3',
+    'https://www.myinstants.com/media/sounds/wild-hunt-limbus-company.mp3',
+    'https://www.myinstants.com/media/sounds/67-kid.mp3',
+    'https://www.myinstants.com/media/sounds/bankai-byakuya.mp3',
+    'https://www.myinstants.com/media/sounds/noo-la-policia.mp3',
+    'https://www.myinstants.com/media/sounds/steal-a-brainrot-los-tralaleritos.mp3',
+    'https://www.myinstants.com/media/sounds/steal-a-brainrot-las-tralaleritas.mp3',
+    'https://www.myinstants.com/media/sounds/steal-a-brainrot-bambino-tralalero-tralala.mp3',
+    'https://www.myinstants.com/media/sounds/bombardino-crocodilo_MSpHN9M.mp3'
+  ];
+  
+  let damageAudioPool = [];
+  let deathAudioPool = [];
+  let currentDeathSound = null; // 현재 재생중인 사망 효과음
+  let audioUnlocked = false;
+  
+  function createAudioPool(urls, count = 3){
+    const pool = [];
+    urls.forEach(url => {
+      for(let i = 0; i < count; i++){
+        const audio = new Audio(url);
+        audio.preload = 'auto';
+        pool.push(audio);
+      }
+    });
+    return pool;
+  }
+  
+  function playRandomSound(pool){
+    if(!SAVE.settings.sfx) return;
+    const sound = pool[Math.floor(Math.random() * pool.length)];
+    sound.volume = SAVE.settings.sfxVol ?? 0.7;
+    try{
+      sound.currentTime = 0;
+      sound.play().catch(()=>{});
+    }catch{}
+  }
+  
+  function playRandomDeathSound(){
+    if(!SAVE.settings.sfx) return;
+    const sound = deathAudioPool[Math.floor(Math.random() * deathAudioPool.length)];
+    sound.volume = SAVE.settings.sfxVol ?? 0.7;
+    currentDeathSound = sound; // 현재 재생중인 사운드 추적
+    try{
+      sound.currentTime = 0;
+      sound.play().catch(()=>{});
+    }catch{}
+  }
+  
+  function stopDeathSound(){
+    if(currentDeathSound){
+      try{
+        currentDeathSound.pause();
+        currentDeathSound.currentTime = 0;
+      }catch{}
+      currentDeathSound = null;
+    }
+  }
+  
+  function playUIClick(){
+    if(!SAVE.settings.sfx) return;
+    uiClickSound.volume = (SAVE.settings.sfxVol ?? 0.7) * 0.5;
+    try{
+      uiClickSound.currentTime = 0;
+      uiClickSound.play().catch(()=>{});
+    }catch{}
+  }
+  
+  function playHitSound(){
+    if(!SAVE.settings.sfx) return;
+    hitSound.volume = (SAVE.settings.sfxVol ?? 0.7) * 0.8;
+    try{
+      hitSound.currentTime = 0;
+      hitSound.play().catch(()=>{});
+    }catch{}
+  }
+  
+  function playSpawnSound(){
+    if(!SAVE.settings.sfx) return;
+    spawnSound.volume = (SAVE.settings.sfxVol ?? 0.7) * 0.3;
+    try{
+      spawnSound.currentTime = 0;
+      spawnSound.play().catch(()=>{});
+    }catch{}
+  }
+  
+  function applyAudioSettings(){
+    // 볼륨은 재생 시점에 적용
+  }
+  
+  function unlockAudioOnce(){ 
+    if(audioUnlocked) return;
+    
+    damageAudioPool = createAudioPool(damageSounds, 1);
+    deathAudioPool = createAudioPool(deathSounds, 1);
+    
+    [uiClickSound, hitSound, spawnSound, ...damageAudioPool, ...deathAudioPool].forEach(a=>{ 
+      try{
+        a.play().then(()=>a.pause()).catch(()=>{})
+      }catch{}
+    }); 
+    
+    audioUnlocked = true; 
+    document.removeEventListener('pointerdown', unlockAudioOnce); 
+  }
+
+  const state = {
+    score: 0, 
+    lives: 5, 
+    combo: 0, 
+    active: false, 
+    paused: false, 
+    startTime: 0, 
+    lastHitTime: 0,
+    spawnDelay: 800, 
+    minSpawnDelay: 300, 
+    frogs: new Set(), 
+    discovered: new Set(), 
+    bossActive:false,
+    bossHP:0, 
+    maxBossHP:0, 
+    bossFrog:null, 
+    gameTime:0, 
+    difficultyLevel:0,
+    shinyCaughtThisGame: 0,
+    lastMissedFrogType: null, // 마지막으로 놓친 두꺼비 타입
+    difficultyNames: ['초급','중급','고급','고수','지옥','지랄','게이','두껍','울티메이트두껍레전드']
+  };
+  
+  let debugMode = false;
+  let debugRandomSpawn = true;
+  
+  if(window.location.hash === '#debug'){
+    debugMode = true;
+    document.getElementById('debug-panel').classList.add('active');
+  }
+
+  // 두껍 데이터 - 스폰 확률 조정
+  const frogTypes = {
+    chingu:{ name:'친구껍', video:'https://media.tenor.com/qSQ3mTn58vgAAAPo/frog-eat.mp4', lifespan:2500, points:15, size:80, maxSize:280, spawnChance:0.30, color:'#4CAF50', description:'배고픈 친구. 먹이를 찾고있다.', behavior:'normal'},
+    shinnan:{ name:'신난두껍', video:'https://media.tenor.com/tLf4YbvzJ6sAAAPo/yee-toad.mp4', lifespan:2400, points:18, size:75, maxSize:270, spawnChance:0.25, color:'#FFEB3B', description:'항상 신남. 기분 업!', behavior:'excited'},
+    dance:{ name:'댄스껍', video:'https://media.tenor.com/XxZQsifhe0AAAAPo/frog-toad.mp4', lifespan:2800, points:20, size:75, maxSize:300, spawnChance:0.20, color:'#00BCD4', description:'리듬 타는 흥많은 두껍', behavior:'dance'},
+    eogul:{ name:'억울껍', video:'https://media.tenor.com/Dxp0w3YjOjkAAAPo/frog-sitting.mp4', lifespan:2300, points:22, size:75, maxSize:280, spawnChance:0.15, color:'#607D8B', description:'억울한 표정… 불쌍', behavior:'sad'},
+    eungdi:{ name:'응디껍', video:'https://media.tenor.com/7b3eYQD9moQAAAPo/frog-toad-flex-twerk.mp4', lifespan:2600, points:25, size:70, maxSize:290, spawnChance:0.12, color:'#FF5722', description:'자신감 넘치는 근육 두껍', behavior:'flex'},
+    flower:{ name:'꽃두껍', video:'https://media.tenor.com/40xvCEgMIj4AAAPo/twerg45-toad.mp4', lifespan:2900, points:28, size:75, maxSize:295, spawnChance:0.10, color:'#E1BEE7', description:'꽃처럼 아름다움', behavior:'flower'},
+    ddungbo:{ name:'뚱보껍', video:'https://media.tenor.com/uvuwfwB8VrQAAAPo/frog-frogs.mp4', lifespan:3200, points:30, size:90, maxSize:400, spawnChance:0.08, color:'#8BC34A', description:'느리지만 거대. 맞추기 쉬움', behavior:'slow'},
+    sinsa:{ name:'신사껍', video:'https://media.tenor.com/ZYmQDoqtUN4AAAPo/colonel-toad.mp4', lifespan:2700, points:35, size:78, maxSize:310, spawnChance:0.07, color:'#795548', description:'품위있는 신사. 느릿한 이동', behavior:'gentleman'},
+    rapper:{ name:'레퍼껍', video:'https://media.tenor.com/Kx3RklAD3-MAAAPo/toad-frog.mp4', lifespan:1600, points:38, size:66, maxSize:210, spawnChance:0.06, color:'#9575CD', description:'비트를 탄다. 예측 난이도↑', behavior:'rap'},
+    ggamnol:{ name:'깜놀껍', video:'https://media.tenor.com/_wfKmsxm0HgAAAPo/souichi-tsujii-sayuri.mp4', lifespan:1200, points:40, size:70, maxSize:200, spawnChance:0.05, color:'#9C27B0', description:'순간이동하며 깜짝 놀라게!', behavior:'teleport', teleportChance:0.3},
+    dwae:{ name:'돼공껍', video:'https://media.tenor.com/4uQqOK2AQrwAAAPo/10th-kingdom-frogs.mp4', lifespan:1800, points:45, size:68, maxSize:220, spawnChance:0.04, color:'#E91E63', description:'급격 성장 변이', behavior:'growFast'},
+    sibi:{ name:'시비껍', video:'https://media.tenor.com/TO7MRzBkquMAAAPo/rawr-thumb.mp4', lifespan:1500, points:50, size:62, maxSize:190, spawnChance:0.03, color:'#FF1744', description:'공격적. 속도가 빠름', behavior:'aggressive'},
+    rush:{ name:'돌격껍', video:'https://media.tenor.com/3ymk3wPLjUwAAAPo/toad.mp4', lifespan:1100, points:60, size:60, maxSize:180, spawnChance:0.02, color:'#F44336', description:'초고속 돌진!', behavior:'rush'},
+    nuclear:{ name:'핵독껍', video:'https://media.tenor.com/GEjoMjVhYuMAAAPo/futurama-hypnotoad.mp4', lifespan:2000, points:100, size:65, maxSize:250, spawnChance:0.01, color:'#FFD700', description:'최면 능력 보유', behavior:'hypnotize'},
+    shiny:{ name:'이로치독', video:'https://media.tenor.com/qSQ3mTn58vgAAAPo/frog-eat.mp4', lifespan:2500, points:150, size:80, maxSize:280, spawnChance:0, color:'#FFD700', description:'전설의 반짝이는 두껍. 5% 확률로 등장!', behavior:'shiny'},
+    boss:{ name:'여왕껍', video:'https://media.tenor.com/97gH8VzfSMQAAAPo/poke-frog.mp4', lifespan:999999, points:500, size:100, maxSize:450, spawnChance:0.002, color:'#ff00ff', description:'전설의 끝판왕', behavior:'boss'}
+  };
+
+  let spawnInterval, difficultyInterval, gameTimeInterval;
+
+  function updateUI(){
+    const scoreEl = document.getElementById('score');
+    scoreEl.textContent = state.score;
+    scoreEl.classList.add('bump');
+    setTimeout(() => scoreEl.classList.remove('bump'), 300);
+    
+    const hearts = document.querySelectorAll('.heart');
+    hearts.forEach((h,i)=>{ 
+      h.classList.toggle('lost', i >= state.lives) 
+    });
+    
+    const comboDisplay = document.getElementById('combo-display');
+    const comboCount = document.getElementById('combo-count');
+    comboCount.textContent = state.combo;
+    if(state.combo>1) comboDisplay.classList.add('active'); 
+    else comboDisplay.classList.remove('active');
+    
+    document.getElementById('difficulty-display').textContent = `난이도: ${state.difficultyNames[state.difficultyLevel]}`;
+  }
+
+  // 이로치독 파티클 생성 - 최적화
+  function createShinyParticles(frog, x, y, size){
+    const particleInterval = setInterval(() => {
+      if(!document.body.contains(frog)){
+        clearInterval(particleInterval);
+        return;
+      }
+      
+      // 1개만 생성으로 감소
+      const particle = document.createElement('div');
+      particle.className = 'shiny-particle';
+      
+      const angle = Math.random() * Math.PI * 2;
+      const distance = size * 0.5;
+      const tx = Math.cos(angle) * distance;
+      const ty = Math.sin(angle) * distance;
+      
+      particle.style.setProperty('--tx', `${tx}px`);
+      particle.style.setProperty('--ty', `${ty}px`);
+      particle.style.left = x + 'px';
+      particle.style.top = y + 'px';
+      
+      document.body.appendChild(particle);
+      
+      setTimeout(() => particle.remove(), 1500);
+    }, 400); // 400ms마다 생성
+    
+    frog.dataset.particleInterval = particleInterval;
+  }
+
+  function createBloodParticles(x,y,count=28){
+    for(let i=0;i<count;i++){
+      const particle = document.createElement('div');
+      particle.className='blood-particle';
+      particle.style.left = x+'px'; 
+      particle.style.top = y+'px';
+      
+      const angle=(Math.PI*2*i)/count; 
+      const speed=3+Math.random()*5; 
+      const vx=Math.cos(angle)*speed; 
+      const vy=Math.sin(angle)*speed;
+      
+      document.body.appendChild(particle);
+      
+      let px=x, py=y, frame=0, maxFrames=40;
+      (function anim(){ 
+        if(frame>=maxFrames){ 
+          particle.remove(); 
+          return; 
         }
+        px+=vx; 
+        py+=vy + frame*0.2; 
+        particle.style.left=px+'px'; 
+        particle.style.top=py+'px'; 
+        particle.style.opacity=1 - (frame/maxFrames); 
+        frame++; 
+        requestAnimationFrame(anim) 
+      })();
+    }
+  }
+  
+  function createHitRing(x, y){
+    const ring = document.createElement('div');
+    ring.className = 'hit-ring';
+    ring.style.left = x + 'px';
+    ring.style.top = y + 'px';
+    document.body.appendChild(ring);
+    setTimeout(() => ring.remove(), 600);
+  }
+  
+  function screenShake(){ 
+    document.body.classList.add('shake'); 
+    setTimeout(()=>document.body.classList.remove('shake'), 500) 
+  }
+  
+  function showScorePopup(x,y,points,color='#fff'){ 
+    const p=document.createElement('div'); 
+    p.className='score-popup'; 
+    p.textContent='+'+points; 
+    p.style.left=x+'px'; 
+    p.style.top=y+'px'; 
+    p.style.color=color; 
+    document.body.appendChild(p); 
+    setTimeout(()=>p.remove(), 820) 
+  }
+  
+  // 대미지 효과 - 두껍 풀스크린
+  function damageFlash(frogType){ 
+    const flash = document.getElementById('damage-flash');
+    const video = document.getElementById('damage-video');
+    const text = document.getElementById('damage-text');
+    
+    const frogData = frogTypes[frogType];
+    if(!frogData) return;
+    
+    video.src = frogData.video;
+    video.load();
+    video.play().catch(()=>{});
+    
+    text.textContent = `두껍${frogData.name}!!@!#@#`;
+    
+    flash.classList.add('active');
+    
+    setTimeout(() => {
+      flash.classList.remove('active');
+      video.pause();
+      video.src = '';
+    }, 500); // 0.5초 표시
+  }
+  
+  function maybeVibrate(pattern=[12]){ 
+    if(!SAVE.settings.vibration) return; 
+    if(navigator.vibrate) try{ navigator.vibrate(pattern) }catch{} 
+  }
+  
+  function createSpecialEffect(x,y,type){ 
+    const e=document.createElement('div'); 
+    e.className='special-effect'; 
+    e.style.left=x+'px'; 
+    e.style.top=y+'px'; 
+    
+    if(type==='hypnotize'){ 
+      Object.assign(e.style,{ 
+        width:'200px', 
+        height:'200px', 
+        border:'5px solid #FFD700', 
+        borderRadius:'50%', 
+        animation:'hypnotize 1s forwards'
+      }); 
+      document.body.appendChild(e); 
+      setTimeout(()=>e.remove(), 1000) 
+    } 
+  }
 
-        function renderScoreLog() {
-            if (!scoreLogElement) return;
-            scoreLogElement.innerHTML = '';
-            state.scoreLog.forEach(entry => {
-                const wrapper = document.createElement('div');
-                wrapper.className = `log-entry${entry.highlight ? ' highlight' : ''}`;
+  function spawnBoss(){ 
+    if(state.bossActive) return; 
+    
+    state.bossActive=true; 
+    state.bossHP = 15 + state.difficultyLevel*5; 
+    state.maxBossHP = state.bossHP;
+    
+    const data=frogTypes.boss; 
+    const frog=document.createElement('div'); 
+    frog.className='frog boss'; 
+    
+    const video=document.createElement('video'); 
+    Object.assign(video,{
+      src:data.video, 
+      autoplay:true, 
+      loop:true, 
+      muted:true, 
+      playsInline:true
+    }); 
+    frog.appendChild(video); 
+    document.body.appendChild(frog);
+    
+    playSpawnSound();
+    
+    state.bossFrog=frog; 
+    state.frogs.add(frog); 
+    state.discovered.add('boss'); 
+    SAVE.discovered['boss']=true; 
+    saveDebounced();
+    
+    document.getElementById('boss-hp-container').classList.add('active'); 
+    updateBossHP();
+    
+    let x=innerWidth/2, y=innerHeight/2, size=data.size, destroyed=false, start=Date.now(), ang=Math.random()*Math.PI*2, changeT=Date.now(), atkT=Date.now();
+    
+    (function anim(){ 
+      if(destroyed||!state.active||state.paused) return; 
+      
+      const el=Date.now()-start; 
+      const prog=Math.min(el/5000,1); 
+      size = data.size + Math.pow(prog,1.5)*(data.maxSize-data.size);
+      
+      if(Date.now()-changeT>1500){ 
+        ang=Math.random()*Math.PI*2; 
+        changeT=Date.now() 
+      }
+      
+      x += Math.cos(ang)*(2+state.difficultyLevel*0.5); 
+      y += Math.sin(ang)*(2+state.difficultyLevel*0.5);
+      
+      x = Math.max(size/2, Math.min(innerWidth - size/2, x)); 
+      y = Math.max(size/2, Math.min(innerHeight - size/2, y));
+      
+      Object.assign(frog.style,{ 
+        left:(x-size/2)+'px', 
+        top:(y-size/2)+'px', 
+        width:size+'px', 
+        height:size+'px' 
+      });
+      
+      if(Date.now()-atkT>3000){ 
+        atkT=Date.now(); 
+        createSpecialEffect(x,y,'hypnotize') 
+      }
+      
+      if(Math.random()<0.005 && state.bossHP<state.maxBossHP){ 
+        state.bossHP=Math.min(state.maxBossHP, state.bossHP+1); 
+        updateBossHP() 
+      }
+      
+      requestAnimationFrame(anim)
+    })();
 
-                const timeSpan = document.createElement('span');
-                timeSpan.className = 'timestamp';
-                timeSpan.textContent = entry.time;
+    function hitBoss(ev){ 
+      if(destroyed||!state.active||state.paused) return; 
+      ev?.stopPropagation?.();
+      
+      playHitSound();
+      
+      state.bossHP--; 
+      updateBossHP(); 
+      createBloodParticles(x,y,20);
+      createHitRing(x, y);
+      screenShake(); 
+      maybeVibrate([8,30,8]);
+      
+      const damage=50; 
+      state.score+=damage; 
+      updateUI(); 
+      showScorePopup(x,y,damage,'#ff00ff');
+      
+      if(state.bossHP<=0){ 
+        destroyed=true; 
+        state.bossActive=false; 
+        state.bossFrog=null; 
+        createBloodParticles(x,y,60); 
+        screenShake(); 
+        state.score+=data.points; 
+        updateUI(); 
+        showScorePopup(x,y,data.points,'#FFD700'); 
+        frog.remove(); 
+        state.frogs.delete(frog); 
+        document.getElementById('boss-hp-container').classList.remove('active'); 
+        SAVE.totals.bossesDefeated++; 
+        saveDebounced(); 
+      }
+    }
+    
+    frog.addEventListener('pointerdown', hitBoss, {passive:true});
+    frog.addEventListener('click', hitBoss);
+  }
+  
+  function updateBossHP(){ 
+    const pct = (state.bossHP/state.maxBossHP)*100; 
+    document.getElementById('boss-hp-fill').style.width = Math.max(0,pct)+'%'; 
+  }
 
-                const messageSpan = document.createElement('span');
-                messageSpan.textContent = entry.message;
+  function spawnFrogManual(key, forceShiny = false){
+    const data = frogTypes[key];
+    if(!data || key === 'boss' || key === 'shiny') return;
+    
+    const frog=document.createElement('div'); 
+    frog.className='frog'; 
+    frog.dataset.type=key;
+    
+    const isShiny = forceShiny || Math.random() < 0.05;
+    if(isShiny){
+      frog.classList.add('shiny');
+      frog.dataset.shiny = 'true';
+    }
+    
+    const video=document.createElement('video'); 
+    Object.assign(video,{
+      src:data.video, 
+      autoplay:true, 
+      loop:true, 
+      muted:true, 
+      playsInline:true
+    }); 
+    frog.appendChild(video); 
+    frog.querySelector('video').style.borderColor = data.color; 
+    document.body.appendChild(frog); 
+    state.frogs.add(frog); 
+    state.discovered.add(key); 
+    SAVE.discovered[key]=true;
+    
+    if(isShiny){
+      state.discovered.add('shiny');
+      SAVE.discovered['shiny']=true;
+    }
+    
+    playSpawnSound();
+    
+    if(!SAVE.stats[key]) SAVE.stats[key]={caught:0,bestCombo:0,bestGain:0}; 
+    saveDebounced();
 
-                wrapper.appendChild(timeSpan);
-                wrapper.appendChild(messageSpan);
-                scoreLogElement.appendChild(wrapper);
-            });
+    const cx = innerWidth / 2;
+    const cy = innerHeight / 2;
+    const margin = 100;
+    
+    const side = Math.floor(Math.random() * 4);
+    let sx, sy;
+    
+    if(side === 0){
+      sx = margin;
+      sy = margin + Math.random() * (innerHeight - margin * 2);
+    } else if(side === 1){
+      sx = innerWidth - margin;
+      sy = margin + Math.random() * (innerHeight - margin * 2);
+    } else if(side === 2){
+      sx = margin + Math.random() * (innerWidth - margin * 2);
+      sy = margin;
+    } else {
+      sx = margin + Math.random() * (innerWidth - margin * 2);
+      sy = innerHeight - margin;
+    }
+    
+    const maxOffset = Math.min(innerWidth, innerHeight) * 0.3;
+    const tx = cx + (Math.random() - 0.5) * maxOffset;
+    const ty = cy + (Math.random() - 0.5) * maxOffset;
 
-            scoreLogElement.scrollTop = scoreLogElement.scrollHeight;
+    let size=data.size, x=sx, y=sy, destroyed=false, start=Date.now(), danceOffset=0, flexT=0, grow=1, rushSpeed=0;
+
+    (function anim(){ 
+      if(destroyed||!state.active||state.paused) return; 
+      
+      const elapsed=Date.now()-start; 
+      const life = Math.max(500, data.lifespan - state.difficultyLevel*200); 
+      let progress=Math.min(elapsed/life,1); 
+      let ease=1 - Math.pow(1-progress,3);
+      
+      switch(data.behavior){
+        case 'teleport': 
+          if(Math.random()<0.02){ 
+            x += (Math.random()-.5)*300; 
+            y += (Math.random()-.5)*300; 
+            frog.style.animation='teleport .2s'; 
+            setTimeout(()=>frog.style.animation='',200) 
+          } 
+          break;
+        case 'dance': 
+          danceOffset = Math.sin(elapsed/200)*50; 
+          x = sx + (tx-sx)*ease + danceOffset; 
+          y = sy + (ty-sy)*ease; 
+          frog.style.animation='dance .5s infinite'; 
+          break;
+        case 'flex': 
+          flexT += .1; 
+          x = sx + (tx-sx)*ease + Math.sin(flexT)*30; 
+          y = sy + (ty-sy)*ease; 
+          frog.style.animation='flex .5s infinite'; 
+          break;
+        case 'growFast': 
+          grow = 1 + progress*2; 
+          break;
+        case 'rush': 
+          if(rushSpeed===0) rushSpeed = 5 + Math.random()*3; 
+          ease = 1 - Math.pow(1-progress,5); 
+          break;
+        case 'aggressive': 
+          ease = 1 - Math.pow(1-progress,4); 
+          break;
+        case 'hypnotize': 
+          if(Math.random()<0.01) createSpecialEffect(x,y,'hypnotize'); 
+          break;
+        default: 
+          x = sx + (tx-sx)*ease; 
+          y = sy + (ty-sy)*ease;
+      }
+      
+      size = data.size + Math.pow(progress,2)*(data.maxSize-data.size); 
+      size *= grow;
+      
+      Object.assign(frog.style,{ 
+        left:(x-size/2)+'px', 
+        top:(y-size/2)+'px', 
+        width:size+'px', 
+        height:size+'px' 
+      });
+      
+      if(isShiny){
+        createShinyParticles(frog, x, y, size);
+      }
+      
+      if(progress>=1){ 
+        destroyed=true; 
+        if(frog.dataset.particleInterval){
+          clearInterval(parseInt(frog.dataset.particleInterval));
         }
+        frog.remove(); 
+        state.frogs.delete(frog);
+        state.lastMissedFrogType = key; // 놓친 두껍 타입 저장
+        if(state.active) loseLife(); 
+        return 
+      }
+      
+      requestAnimationFrame(anim)
+    })();
 
-        function logScore(message, options = {}) {
-            const timestamp = formatLogTime();
-            state.scoreLog.push({
-                time: timestamp,
-                message,
-                highlight: Boolean(options.highlight)
-            });
+    function onHit(ev){ 
+      if(destroyed||!state.active||state.paused) return; 
+      destroyed=true; 
+      ev?.stopPropagation?.();
+      
+      playHitSound();
+      
+      if(frog.dataset.particleInterval){
+        clearInterval(parseInt(frog.dataset.particleInterval));
+      }
+      
+      createBloodParticles(x,y,40);
+      createHitRing(x, y);
+      screenShake(); 
+      maybeVibrate([8]);
+      
+      const now=Date.now(); 
+      if(now - state.lastHitTime < 1200) state.combo++; 
+      else state.combo=1; 
+      state.lastHitTime=now;
+      
+      const mult = 1 + Math.min(state.combo*0.15, 2);
+      
+      let basePoints = data.points;
+      let finalColor = data.color;
+      
+      if(isShiny){
+        basePoints = Math.floor(data.points * 2.5);
+        finalColor = '#FFD700';
+        state.shinyCaughtThisGame++;
+        SAVE.totals.shinyCaught++;
+      }
+      
+      const gain = Math.floor(basePoints * mult);
+      state.score += gain; 
+      updateUI(); 
+      showScorePopup(x,y,gain,finalColor);
+      
+      frog.remove(); 
+      state.frogs.delete(frog);
+      
+      SAVE.totals.hits++; 
+      if(!SAVE.stats[key]) SAVE.stats[key]={caught:0,bestCombo:0,bestGain:0}; 
+      SAVE.stats[key].caught++; 
+      SAVE.stats[key].bestCombo = Math.max(SAVE.stats[key].bestCombo, state.combo); 
+      SAVE.stats[key].bestGain = Math.max(SAVE.stats[key].bestGain, gain); 
+      saveDebounced();
+    }
+    
+    frog.addEventListener('pointerdown', onHit, {passive:true});
+    frog.addEventListener('click', onHit);
+  }
+  
+  function spawnFrog(){ 
+    if(!state.active||state.paused) return; 
+    
+    if(debugMode && !debugRandomSpawn) return;
+    
+    const rand=Math.random(); 
+    let cumulative=0; 
+    let key='chingu';
+    
+    for(const [k,d] of Object.entries(frogTypes)){
+      if(k==='boss'){ 
+        if(rand<0.002 && !state.bossActive && state.score>1000){ 
+          spawnBoss(); 
+          return 
+        } 
+        continue 
+      }
+      if(k==='shiny') continue; // 이로치독은 랜덤 스폰 제외
+      
+      cumulative += d.spawnChance; 
+      if(rand < cumulative){ 
+        key=k; 
+        break 
+      }
+    }
+    
+    spawnFrogManual(key);
+  }
 
-            if (state.scoreLog.length > MAX_LOG_ENTRIES) {
-                state.scoreLog.splice(0, state.scoreLog.length - MAX_LOG_ENTRIES);
-            }
+  function loseLife(){ 
+    state.lives--; 
+    state.combo=0; 
+    updateUI(); 
+    
+    playRandomSound(damageAudioPool);
+    
+    if(state.lastMissedFrogType){
+      damageFlash(state.lastMissedFrogType);
+    }
+    
+    screenShake(); 
+    maybeVibrate([50]); 
+    SAVE.totals.misses++; 
+    saveDebounced(); 
+    
+    if(state.lives<=0) gameOver(); 
+  }
+  
+  function increaseDifficulty(){ 
+    if(!state.active||state.spawnDelay<=state.minSpawnDelay||state.paused) return; 
+    
+    state.spawnDelay = Math.max(state.minSpawnDelay, state.spawnDelay - 30); 
+    state.difficultyLevel = Math.min(4, Math.floor((800 - state.spawnDelay)/100)); 
+    
+    clearInterval(spawnInterval); 
+    spawnInterval = setInterval(spawnFrog, state.spawnDelay); 
+    updateUI(); 
+  }
+  
+  function updateGameTime(){ 
+    if(!state.active||state.paused) return; 
+    state.gameTime = Date.now() - state.startTime 
+  }
 
-            renderScoreLog();
+  function gameOver(){ 
+    state.active=false; 
+    clearInterval(spawnInterval); 
+    clearInterval(difficultyInterval); 
+    clearInterval(gameTimeInterval); 
+    state.frogs.forEach(f=>{
+      if(f.dataset.particleInterval){
+        clearInterval(parseInt(f.dataset.particleInterval));
+      }
+      f.remove();
+    }); 
+    state.frogs.clear();
+    
+    playRandomDeathSound();
+    
+    const elapsed=(state.gameTime/1000).toFixed(1); 
+    const discoveredCount = Object.keys(SAVE.discovered).length;
+    
+    addGameRecord(
+      state.score, 
+      elapsed, 
+      state.difficultyNames[state.difficultyLevel],
+      state.shinyCaughtThisGame
+    );
+    
+    let statsHTML = `최종 점수: <strong>${state.score}</strong><br>생존 시간: <strong>${elapsed}초</strong><br>발견한 독두껍: <strong>${discoveredCount}/16</strong><br>최종 난이도: <strong>${state.difficultyNames[state.difficultyLevel]}</strong>`;
+    
+    if(state.shinyCaughtThisGame > 0){
+      statsHTML += `<br><span style="color:#FFD700">✨ 이로치독 ${state.shinyCaughtThisGame}마리 획득!</span>`;
+    }
+    
+    document.getElementById('final-stats').innerHTML = statsHTML;
+    
+    if(state.score > (SAVE.highScore||0)){ 
+      SAVE.highScore = state.score; 
+      document.getElementById('highscore-label').textContent = `최고 점수: ${SAVE.highScore}`; 
+    }
+    
+    saveDebounced(); 
+    document.getElementById('game-over').classList.add('active');
+  }
+  
+  function startGame(){ 
+    stopDeathSound(); // 사망 효과음 정지
+    
+    state.score=0; 
+    state.lives=5; 
+    state.combo=0; 
+    state.active=true; 
+    state.paused=false; 
+    state.startTime=Date.now(); 
+    state.lastHitTime=0; 
+    state.spawnDelay=800; 
+    state.bossActive=false; 
+    state.bossHP=0; 
+    state.bossFrog=null; 
+    state.frogs.clear(); 
+    state.gameTime=0; 
+    state.difficultyLevel=0;
+    state.shinyCaughtThisGame=0;
+    state.lastMissedFrogType=null;
+    updateUI();
+    
+    document.getElementById('main-menu').style.display='none'; 
+    document.getElementById('game-over').classList.remove('active'); 
+    document.getElementById('boss-hp-container').classList.remove('active'); 
+    document.getElementById('pause-screen').classList.remove('active');
+    
+    clearInterval(spawnInterval); 
+    clearInterval(difficultyInterval); 
+    clearInterval(gameTimeInterval);
+    
+    spawnInterval = setInterval(spawnFrog, state.spawnDelay); 
+    difficultyInterval = setInterval(increaseDifficulty, 2500); 
+    gameTimeInterval = setInterval(updateGameTime, 1000);
+  }
+  
+  function togglePause(){ 
+    if(!state.active) return; 
+    state.paused = !state.paused; 
+    document.getElementById('pause-screen').classList.toggle('active', state.paused) 
+  }
+  
+  function showMainMenu(){ 
+    stopDeathSound(); // 사망 효과음 정지
+    
+    state.active=false; 
+    state.paused=false; 
+    clearInterval(spawnInterval); 
+    clearInterval(difficultyInterval); 
+    clearInterval(gameTimeInterval); 
+    state.frogs.forEach(f=>{
+      if(f.dataset.particleInterval){
+        clearInterval(parseInt(f.dataset.particleInterval));
+      }
+      f.remove();
+    }); 
+    state.frogs.clear(); 
+    document.getElementById('main-menu').style.display='flex'; 
+    document.getElementById('game-over').classList.remove('active'); 
+    document.getElementById('collection-modal').classList.remove('active'); 
+    document.getElementById('pause-screen').classList.remove('active'); 
+  }
+
+  function updateCollection(filter='all'){
+    const grid=document.getElementById('collection-grid'); 
+    grid.innerHTML='';
+    
+    const entries = Object.entries(frogTypes);
+    const total = entries.length; 
+    const discoveredCount = Object.keys(SAVE.discovered).length;
+    const pct = Math.round((discoveredCount/total)*100);
+    document.getElementById('collection-progress').textContent = `발견 ${discoveredCount} / ${total} (${pct}%)`;
+
+    const filtered = entries.filter(([k,d])=>{
+      if(filter==='all') return true;
+      if(filter==='easy') return d.points<=25 || d.lifespan>=2600;
+      if(filter==='hard') return d.points>=45 || d.lifespan<=1600;
+      if(filter==='rare') return d.spawnChance<=0.07 || k==='shiny';
+      if(filter==='behavior') return !['normal','slow'].includes(d.behavior);
+      return true;
+    });
+
+    for(const [key,data] of filtered){
+      const item=document.createElement('div'); 
+      item.className='collection-item'; 
+      item.style.setProperty('--item-color', data.color);
+      
+      const disc = !!SAVE.discovered[key]; 
+      item.classList.add(disc? 'discovered':'locked');
+      
+      const thumb=document.createElement('div'); 
+      thumb.className='thumb'; 
+      
+      if(disc){ 
+        const v=document.createElement('video'); 
+        Object.assign(v,{
+          src:data.video, 
+          muted:true, 
+          loop:true, 
+          playsInline:true
+        }); 
+        v.autoplay=true; 
+        thumb.appendChild(v) 
+      }
+      
+      const right=document.createElement('div');
+      const h3=document.createElement('h3'); 
+      h3.textContent = disc? data.name : '???';
+      
+      const p=document.createElement('p'); 
+      p.textContent = disc? data.description : '아직 발견하지 못한 독두껍';
+      
+      const s=document.createElement('div'); 
+      s.className='collection-stats';
+      const st = SAVE.stats[key] || {caught:0,bestCombo:0,bestGain:0};
+      
+      if(key === 'shiny'){
+        s.textContent = disc? `이로치독 획득 횟수: ${SAVE.totals.shinyCaught}회` : '';
+      } else {
+        s.textContent = disc? `점수 ${data.points} | 수명 ${(data.lifespan/1000).toFixed(1)}초 | 획득 ${st.caught}회 | 최고콤보 ${st.bestCombo}` : '';
+      }
+      
+      right.appendChild(h3); 
+      right.appendChild(p); 
+      right.appendChild(s);
+      item.appendChild(thumb); 
+      item.appendChild(right); 
+      grid.appendChild(item);
+    }
+  }
+  
+  function initDebugMode(){
+    if(!debugMode) return;
+    
+    const spawner = document.getElementById('frog-spawner');
+    
+    Object.entries(frogTypes).forEach(([key, data]) => {
+      if(key === 'boss' || key === 'shiny') return;
+      
+      const btn = document.createElement('button');
+      btn.className = 'spawn-btn';
+      btn.innerHTML = `
+        <div>${data.name}</div>
+        <div style="font-size:10px; color:#888;">${data.points}pt</div>
+      `;
+      btn.addEventListener('click', () => {
+        spawnFrogManual(key);
+        playUIClick();
+      });
+      spawner.appendChild(btn);
+    });
+    
+    document.getElementById('toggle-random-spawn').addEventListener('click', function(){
+      debugRandomSpawn = !debugRandomSpawn;
+      this.textContent = `랜덤 스폰: ${debugRandomSpawn ? 'ON' : 'OFF'}`;
+      this.classList.toggle('active', debugRandomSpawn);
+      playUIClick();
+    });
+    
+    document.getElementById('clear-all-frogs').addEventListener('click', () => {
+      state.frogs.forEach(f => {
+        if(f.dataset.particleInterval){
+          clearInterval(parseInt(f.dataset.particleInterval));
         }
+        f.remove();
+      });
+      state.frogs.clear();
+      playUIClick();
+    });
+  }
 
-        function updateUI() {
-            document.getElementById('score').textContent = state.score;
-            const hearts = document.querySelectorAll('.heart');
-            hearts.forEach((heart, i) => {
-                heart.classList.toggle('lost', i >= state.lives);
-            });
-            
-            // 콤보 표시 업데이트
-            const comboDisplay = document.getElementById('combo-display');
-            const comboCount = document.getElementById('combo-count');
-            comboCount.textContent = state.combo;
-            
-            if (state.combo > 1) {
-                comboDisplay.classList.add('active');
-            } else {
-                comboDisplay.classList.remove('active');
-            }
-            
-            // 난이도 표시 업데이트
-            document.getElementById('difficulty-display').textContent = `난이도: ${state.difficultyNames[state.difficultyLevel]}`;
-        }
+  const buttons = document.querySelectorAll('.menu-btn, .pause-btn, .game-over-btn, .close-btn, .chip');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', playUIClick);
+  });
 
-        function createBloodParticles(x, y, count = 30) {
-            for (let i = 0; i < count; i++) {
-                const particle = document.createElement('div');
-                particle.className = 'blood-particle';
-                particle.style.left = x + 'px';
-                particle.style.top = y + 'px';
-                
-                const angle = (Math.PI * 2 * i) / count;
-                const speed = 3 + Math.random() * 5;
-                const distance = 80 + Math.random() * 120;
-                
-                const vx = Math.cos(angle) * speed;
-                const vy = Math.sin(angle) * speed;
-                
-                document.body.appendChild(particle);
-                
-                let px = x, py = y;
-                let frame = 0;
-                const maxFrames = 40;
-                
-                function animateParticle() {
-                    if (frame >= maxFrames) {
-                        particle.remove();
-                        return;
-                    }
-                    
-                    px += vx;
-                    py += vy + frame * 0.2;
-                    
-                    particle.style.left = px + 'px';
-                    particle.style.top = py + 'px';
-                    particle.style.opacity = 1 - (frame / maxFrames);
-                    
-                    frame++;
-                    requestAnimationFrame(animateParticle);
-                }
-                
-                animateParticle();
-            }
-        }
+  document.getElementById('start-btn').addEventListener('click', startGame);
+  document.getElementById('collection-menu-btn').addEventListener('click', ()=>{ 
+    updateCollection(); 
+    document.getElementById('collection-modal').classList.add('active') 
+  });
+  document.getElementById('how-to-play-btn').addEventListener('click', ()=>{ 
+    document.getElementById('howto-modal').classList.add('active') 
+  });
+  document.getElementById('settings-menu-btn').addEventListener('click', ()=>{ 
+    document.getElementById('settings-modal').classList.add('active') 
+  });
 
-        function screenShake() {
-            document.body.classList.add('shake');
-            setTimeout(() => document.body.classList.remove('shake'), 500);
-        }
+  document.getElementById('close-collection').addEventListener('click', ()=> 
+    document.getElementById('collection-modal').classList.remove('active')
+  );
+  
+  document.querySelectorAll('.chip').forEach(ch=> 
+    ch.addEventListener('click', ()=>{ 
+      document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); 
+      ch.classList.add('active'); 
+      updateCollection(ch.dataset.filter) 
+    })
+  );
 
-        function showScorePopup(x, y, points, color = '#fff') {
-            const popup = document.createElement('div');
-            popup.className = 'score-popup';
-            popup.textContent = `+${points}`;
-            popup.style.left = x + 'px';
-            popup.style.top = y + 'px';
-            popup.style.color = color;
-            document.body.appendChild(popup);
-            setTimeout(() => popup.remove(), 800);
-        }
+  document.getElementById('pause-btn').addEventListener('click', togglePause);
+  document.getElementById('resume-btn').addEventListener('click', togglePause);
+  document.getElementById('pause-collection-btn').addEventListener('click', ()=>{ 
+    updateCollection(); 
+    document.getElementById('collection-modal').classList.add('active') 
+  });
+  document.getElementById('pause-main-menu-btn').addEventListener('click', showMainMenu);
+  document.getElementById('pause-settings-btn').addEventListener('click', ()=>{ 
+    document.getElementById('settings-modal').classList.add('active') 
+  });
 
-        function damageFlash() {
-            const flash = document.getElementById('damage-flash');
-            flash.classList.add('active');
-            setTimeout(() => flash.classList.remove('active'), 300);
-        }
+  document.getElementById('howto-close').addEventListener('click', ()=> 
+    document.getElementById('howto-modal').classList.remove('active')
+  );
+  document.getElementById('settings-close').addEventListener('click', ()=> 
+    document.getElementById('settings-modal').classList.remove('active')
+  );
 
-        function createSpecialEffect(x, y, type) {
-            const effect = document.createElement('div');
-            effect.className = 'special-effect';
-            effect.style.left = x + 'px';
-            effect.style.top = y + 'px';
-            
-            if (type === 'hypnotize') {
-                effect.style.width = '200px';
-                effect.style.height = '200px';
-                effect.style.border = '5px solid #FFD700';
-                effect.style.borderRadius = '50%';
-                effect.style.boxShadow = '0 0 30px #FFD700';
-                effect.style.animation = 'hypnotize 1s forwards';
-                
-                document.body.appendChild(effect);
-                setTimeout(() => effect.remove(), 1000);
-            }
-            // 다른 효과들도 추가 가능
-        }
+  document.getElementById('sfx-toggle').addEventListener('change', (e)=>{ 
+    SAVE.settings.sfx = e.target.checked; 
+    applyAudioSettings(); 
+    saveDebounced() 
+  });
+  
+  document.getElementById('sfx-volume').addEventListener('input', (e)=>{ 
+    const v=parseFloat(e.target.value); 
+    SAVE.settings.sfxVol=v; 
+    document.getElementById('sfx-vol-label').textContent = `${Math.round(v*100)}%`; 
+    applyAudioSettings(); 
+    saveDebounced() 
+  });
+  
+  document.getElementById('vibe-toggle').addEventListener('change', (e)=>{ 
+    SAVE.settings.vibration = e.target.checked; 
+    saveDebounced() 
+  });
 
-        function spawnBoss() {
-            if (state.bossActive) return;
-            
-            state.bossActive = true;
-            state.bossHP = 15 + state.difficultyLevel * 5;
-            state.maxBossHP = state.bossHP;
-            
-            const bossData = frogTypes.boss;
-            const frog = document.createElement('div');
-            frog.className = 'frog boss';
-            
-            const video = document.createElement('video');
-            video.src = bossData.video;
-            video.autoplay = true;
-            video.loop = true;
-            video.muted = true;
-            video.playsInline = true;
-            frog.appendChild(video);
-            document.body.appendChild(frog);
-            
-            state.bossFrog = frog;
-            state.frogs.add(frog);
-            state.discovered.add('boss');
-            
-            document.getElementById('boss-hp-container').classList.add('active');
-            updateBossHP();
-            logScore(`보스 등장! ${bossData.name} (HP ${state.bossHP})`, { highlight: true });
-            
-            let x = window.innerWidth / 2;
-            let y = window.innerHeight / 2;
-            let size = bossData.size;
-            const maxSize = bossData.maxSize;
-            let destroyed = false;
-            let startTime = Date.now();
-            let moveAngle = Math.random() * Math.PI * 2;
-            let changeDirectionTime = Date.now();
-            let lastAttackTime = Date.now();
-            
-            function animate() {
-                if (destroyed || !state.active || state.paused) return;
-                
-                const elapsed = Date.now() - startTime;
-                const progress = Math.min(elapsed / 5000, 1);
-                size = bossData.size + Math.pow(progress, 1.5) * (maxSize - bossData.size);
-                
-                if (Date.now() - changeDirectionTime > 1500) {
-                    moveAngle = Math.random() * Math.PI * 2;
-                    changeDirectionTime = Date.now();
-                }
-                
-                x += Math.cos(moveAngle) * (2 + state.difficultyLevel * 0.5);
-                y += Math.sin(moveAngle) * (2 + state.difficultyLevel * 0.5);
-                
-                x = Math.max(size / 2, Math.min(window.innerWidth - size / 2, x));
-                y = Math.max(size / 2, Math.min(window.innerHeight - size / 2, y));
-                
-                frog.style.left = (x - size / 2) + 'px';
-                frog.style.top = (y - size / 2) + 'px';
-                frog.style.width = size + 'px';
-                frog.style.height = size + 'px';
-                
-                // 보스 공격 패턴
-                if (Date.now() - lastAttackTime > 3000) {
-                    lastAttackTime = Date.now();
-                    // 보스가 공격할 때 추가 효과
-                    createSpecialEffect(x, y, 'hypnotize');
-                }
-                
-                if (Math.random() < 0.005 && state.bossHP < state.maxBossHP) {
-                    state.bossHP = Math.min(state.maxBossHP, state.bossHP + 1);
-                    updateBossHP();
-                }
-                
-                requestAnimationFrame(animate);
-            }
-            
-            animate();
-            
-            frog.addEventListener('click', (e) => {
-                if (destroyed || !state.active || state.paused) return;
-                e.stopPropagation();
-                
-                // 효과음 재생
-                hitSound.currentTime = 0;
-                hitSound.play().catch(e => console.log("오디오 재생 오류:", e));
-                
-                state.bossHP--;
-                updateBossHP();
-                logScore(`보스 타격! 남은 체력 ${Math.max(state.bossHP, 0)}`, { highlight: true });
-                createBloodParticles(x, y, 20);
-                screenShake();
-                
-                const damage = 50;
-                state.score += damage;
-                updateUI();
-                showScorePopup(x, y, damage, '#ff00ff');
-                
-                if (state.bossHP <= 0) {
-                    destroyed = true;
-                    state.bossActive = false;
-                    state.bossFrog = null;
-                    
-                    createBloodParticles(x, y, 60);
-                    screenShake();
-                    
-                    state.score += bossData.points;
-                    updateUI();
-                    showScorePopup(x, y, bossData.points, '#FFD700');
-                    logScore(`${bossData.name} 격파! 추가 점수 +${bossData.points}`, { highlight: true });
+  document.getElementById('export-btn').addEventListener('click', ()=>{ 
+    const blob=new Blob([JSON.stringify(SAVE,null,2)], {type:'application/json'}); 
+    const url=URL.createObjectURL(blob); 
+    const a=document.createElement('a'); 
+    a.href=url; 
+    a.download='joraldukkup_save.json'; 
+    a.click(); 
+    setTimeout(()=>URL.revokeObjectURL(url), 1000) 
+  });
+  
+  document.getElementById('import-btn').addEventListener('click', ()=>{ 
+    const inp=document.createElement('input'); 
+    inp.type='file'; 
+    inp.accept='application/json'; 
+    inp.onchange = ()=>{ 
+      const f=inp.files[0]; 
+      if(!f) return; 
+      const r=new FileReader(); 
+      r.onload=()=>{ 
+        try{ 
+          const j=JSON.parse(r.result); 
+          if(j && typeof j==='object'){ 
+            SAVE = Object.assign({}, SAVE, j); 
+            saveNow(); 
+            loadSave(); 
+            alert('가져오기 완료!') 
+          } 
+        }catch{ 
+          alert('불러오기 실패') 
+        } 
+      }; 
+      r.readAsText(f) 
+    }; 
+    inp.click() 
+  });
+  
+  document.getElementById('reset-btn').addEventListener('click', ()=>{ 
+    if(confirm('정말 초기화할까요? 진행도/설정이 모두 삭제됩니다.')){ 
+      try{ 
+        localStorage.removeItem(STORAGE_KEY) 
+      }catch{}; 
+      SAVE={
+        highScore:0, 
+        discovered:{}, 
+        totals:{hits:0,misses:0,bossesDefeated:0,shinyCaught:0}, 
+        stats:{}, 
+        gameHistory:[],
+        settings:{sfx:true,sfxVol:0.7,vibration:true}
+      }; 
+      loadSave(); 
+      alert('초기화 완료') 
+    } 
+  });
 
-                    frog.remove();
-                    state.frogs.delete(frog);
-                    document.getElementById('boss-hp-container').classList.remove('active');
-                }
-            });
-        }
+  document.getElementById('restart-btn').addEventListener('click', ()=>{
+    document.getElementById('game-over').classList.remove('active');
+    startGame();
+  });
+  
+  document.getElementById('collection-gameover-btn').addEventListener('click', ()=>{ 
+    updateCollection(); 
+    document.getElementById('collection-modal').classList.add('active') 
+  });
+  
+  document.getElementById('main-menu-btn').addEventListener('click', showMainMenu);
+  
+  document.getElementById('score-log-btn').addEventListener('click', showScoreLog);
+  
+  document.getElementById('close-score-log').addEventListener('click', ()=>
+    document.getElementById('score-log-modal').classList.remove('active')
+  );
 
-        function updateBossHP() {
-            const percent = (state.bossHP / state.maxBossHP) * 100;
-            document.getElementById('boss-hp-fill').style.width = percent + '%';
-        }
+  document.body.addEventListener('pointerdown', unlockAudioOnce, {passive:true});
+  document.body.addEventListener('touchstart', ()=>{}, {passive:true});
+  
+  if(isMobile){ 
+    const hint=document.getElementById('touch-hint'); 
+    setTimeout(()=>hint.classList.add('show'), 300); 
+    setTimeout(()=>hint.classList.remove('show'), 3000); 
+  }
 
-        function spawnFrog() {
-            if (!state.active || state.paused) return;
-            
-            const rand = Math.random();
-            let cumulativeChance = 0;
-            let selectedType = 'chingu';
-            
-            for (const [key, data] of Object.entries(frogTypes)) {
-                if (key === 'boss') {
-                    if (rand < 0.002 && !state.bossActive && state.score > 1000) {
-                        spawnBoss();
-                        return;
-                    }
-                    continue;
-                }
-                
-                cumulativeChance += data.spawnChance;
-                if (rand < cumulativeChance) {
-                    selectedType = key;
-                    break;
-                }
-            }
-            
-            const frogData = frogTypes[selectedType];
-            const frog = document.createElement('div');
-            frog.className = 'frog';
-            frog.dataset.type = selectedType;
+  window.addEventListener('contextmenu', e=>e.preventDefault());
 
-            const video = document.createElement('video');
-            video.src = frogData.video;
-            video.autoplay = true;
-            video.loop = true;
-            video.muted = true;
-            video.playsInline = true;
-            video.style.borderColor = frogData.color;
-            frog.appendChild(video);
-
-            const isShiny = Math.random() < state.shinyChance;
-            frog.dataset.shiny = isShiny;
-            if (isShiny) {
-                frog.classList.add('shiny');
-                logScore(`${frogData.name}의 이로치독두껍 출현!`, { highlight: true });
-            }
-
-            document.body.appendChild(frog);
-            state.frogs.add(frog);
-            state.discovered.add(selectedType);
-
-            const safeMarginX = Math.max(frogData.maxSize / 2 + 20, 120);
-            const safeMarginY = Math.max(frogData.maxSize / 2 + 20, 120);
-            const clampX = (value) => {
-                if (window.innerWidth <= safeMarginX * 2) {
-                    return window.innerWidth / 2;
-                }
-                return Math.min(Math.max(value, safeMarginX), window.innerWidth - safeMarginX);
-            };
-            const clampY = (value) => {
-                if (window.innerHeight <= safeMarginY * 2) {
-                    return window.innerHeight / 2;
-                }
-                return Math.min(Math.max(value, safeMarginY), window.innerHeight - safeMarginY);
-            };
-            const randomX = () => clampX(safeMarginX + Math.random() * Math.max(0, window.innerWidth - safeMarginX * 2));
-            const randomY = () => clampY(safeMarginY + Math.random() * Math.max(0, window.innerHeight - safeMarginY * 2));
-
-            const side = Math.floor(Math.random() * 4);
-            let startX, startY;
-
-            if (side === 0) {
-                startX = clampX(safeMarginX);
-                startY = randomY();
-            } else if (side === 1) {
-                startX = clampX(window.innerWidth - safeMarginX);
-                startY = randomY();
-            } else if (side === 2) {
-                startX = randomX();
-                startY = clampY(safeMarginY);
-            } else {
-                startX = randomX();
-                startY = clampY(window.innerHeight - safeMarginY);
-            }
-
-            const targetX = randomX();
-            const targetY = randomY();
-
-            let size = frogData.size;
-            let currentX = startX;
-            let currentY = startY;
-            let destroyed = false;
-            let startTime = Date.now();
-            let lastTeleport = startTime;
-            let flexTime = 0;
-            let growFactor = 1;
-            let rushSpeed = 0;
-
-            function animate() {
-                if (destroyed || !state.active || state.paused) return;
-
-                const elapsed = Date.now() - startTime;
-                const adjustedLifespan = Math.max(800, frogData.lifespan - state.difficultyLevel * 200);
-                const progress = Math.min(elapsed / adjustedLifespan, 1);
-
-                let easeProgress = 1 - Math.pow(1 - progress, 3);
-
-                if (frogData.behavior === 'rush') {
-                    if (rushSpeed === 0) rushSpeed = 5 + Math.random() * 3;
-                    easeProgress = 1 - Math.pow(1 - progress, 5);
-                } else if (frogData.behavior === 'aggressive') {
-                    easeProgress = 1 - Math.pow(1 - progress, 4);
-                }
-
-                let nextX = startX + (targetX - startX) * easeProgress;
-                let nextY = startY + (targetY - startY) * easeProgress;
-
-                frog.style.animation = '';
-
-                switch (frogData.behavior) {
-                    case 'teleport': {
-                        const canTeleport = Date.now() - lastTeleport > 400 && Math.random() < (frogData.teleportChance || 0.25);
-                        if (canTeleport) {
-                            nextX = clampX(currentX + (Math.random() - 0.5) * 280);
-                            nextY = clampY(currentY + (Math.random() - 0.5) * 280);
-                            frog.style.animation = 'teleport 0.2s';
-                            lastTeleport = Date.now();
-                            setTimeout(() => frog.style.animation = '', 200);
-                        }
-                        break;
-                    }
-                    case 'dance':
-                        nextX += Math.sin(elapsed / 200) * 50;
-                        frog.style.animation = 'dance 0.5s infinite';
-                        break;
-                    case 'flex':
-                        flexTime += 0.1;
-                        nextX += Math.sin(flexTime) * 30;
-                        frog.style.animation = 'flex 0.5s infinite';
-                        break;
-                    case 'growFast':
-                        growFactor = 1 + progress * 2;
-                        break;
-                    case 'hypnotize':
-                        if (Math.random() < 0.01) {
-                            createSpecialEffect(currentX, currentY, 'hypnotize');
-                        }
-                        break;
-                    default:
-                        break;
-                }
-
-                nextX = clampX(nextX);
-                nextY = clampY(nextY);
-
-                currentX = nextX;
-                currentY = nextY;
-
-                size = frogData.size + Math.pow(progress, 2) * (frogData.maxSize - frogData.size);
-                size *= growFactor;
-                if (isShiny) {
-                    size *= 1.05;
-                }
-
-                frog.style.left = (currentX - size / 2) + 'px';
-                frog.style.top = (currentY - size / 2) + 'px';
-                frog.style.width = size + 'px';
-                frog.style.height = size + 'px';
-
-                if (progress >= 1) {
-                    destroyed = true;
-                    frog.remove();
-                    state.frogs.delete(frog);
-                    loseLife();
-                    return;
-                }
-
-                requestAnimationFrame(animate);
-            }
-
-            animate();
-
-            frog.addEventListener('click', (e) => {
-                if (destroyed || !state.active || state.paused) return;
-                destroyed = true;
-                e.stopPropagation();
-
-                // 효과음 재생
-                hitSound.currentTime = 0;
-                hitSound.play().catch(err => console.log("오디오 재생 오류:", err));
-
-                createBloodParticles(currentX, currentY, isShiny ? 45 : 30);
-                screenShake();
-
-                const now = Date.now();
-                if (now - state.lastHitTime < 1200) {
-                    state.combo++;
-                } else {
-                    state.combo = 1;
-                }
-                state.lastHitTime = now;
-
-                const basePoints = isShiny ? Math.floor(frogData.points * 2) : frogData.points;
-                const comboMultiplier = 1 + Math.min(state.combo * 0.15, 2);
-                const earnedPoints = Math.floor(basePoints * comboMultiplier);
-
-                state.score += earnedPoints;
-                updateUI();
-
-                const popupColor = isShiny ? '#ffeb3b' : frogData.color;
-                showScorePopup(currentX, currentY, earnedPoints, popupColor);
-
-                const comboText = state.combo > 1 ? ` (콤보 x${state.combo})` : '';
-                logScore(`${frogData.name}${isShiny ? ' (이로치)' : ''} 격파! +${earnedPoints}점${comboText}`, {
-                    highlight: isShiny || state.combo > 1
-                });
-
-                frog.remove();
-                state.frogs.delete(frog);
-            });
-        }
-
-        function loseLife() {
-            state.lives--;
-            state.combo = 0;
-            updateUI();
-            logScore(`생명 감소! 남은 목숨: ${Math.max(state.lives, 0)}`, { highlight: true });
-
-            // 피격음 재생
-            damageSound.currentTime = 0;
-            damageSound.play().catch(e => console.log("오디오 재생 오류:", e));
-            
-            damageFlash();
-            screenShake();
-            
-            if (state.lives <= 0) {
-                gameOver();
-            }
-        }
-
-        function increaseDifficulty() {
-            if (!state.active || state.spawnDelay <= state.minSpawnDelay || state.paused) return;
-            const previousLevel = state.difficultyLevel;
-            state.spawnDelay = Math.max(state.minSpawnDelay, state.spawnDelay - 30);
-            state.difficultyLevel = Math.min(4, Math.floor((800 - state.spawnDelay) / 100));
-
-            clearInterval(spawnInterval);
-            spawnInterval = setInterval(spawnFrog, state.spawnDelay);
-
-            updateUI();
-
-            if (state.difficultyLevel !== previousLevel) {
-                logScore(`난이도 상승! 현재 난이도: ${state.difficultyNames[state.difficultyLevel]}`, { highlight: true });
-            }
-        }
-
-        function updateGameTime() {
-            if (!state.active || state.paused) return;
-            state.gameTime = Date.now() - state.startTime;
-        }
-
-        function gameOver() {
-            state.active = false;
-            clearInterval(spawnInterval);
-            clearInterval(difficultyInterval);
-            clearInterval(gameTimeInterval);
-            
-            state.frogs.forEach(frog => frog.remove());
-            state.frogs.clear();
-            
-            const elapsed = (state.gameTime / 1000).toFixed(1);
-            document.getElementById('final-stats').innerHTML = `
-                최종 점수: <strong>${state.score}</strong><br>
-                생존 시간: <strong>${elapsed}초</strong><br>
-                발견한 독두껍: <strong>${state.discovered.size}/15</strong><br>
-                최종 난이도: <strong>${state.difficultyNames[state.difficultyLevel]}</strong>
-            `;
-
-            document.getElementById('game-over').classList.add('active');
-            logScore(`게임 종료! 최종 점수 ${state.score}점`, { highlight: true });
-        }
-
-        function startGame() {
-            state.score = 0;
-            state.lives = 3;
-            state.combo = 0;
-            state.active = true;
-            state.paused = false;
-            state.startTime = Date.now();
-            state.lastHitTime = 0;
-            state.spawnDelay = 800;
-            state.bossActive = false;
-            state.bossHP = 0;
-            state.bossFrog = null;
-            state.frogs.clear();
-            state.gameTime = 0;
-            state.difficultyLevel = 0;
-            state.scoreLog = [];
-
-            renderScoreLog();
-            logScore('게임 시작!', { highlight: true });
-
-            updateUI();
-            document.getElementById('main-menu').style.display = 'none';
-            document.getElementById('game-over').classList.remove('active');
-            document.getElementById('boss-hp-container').classList.remove('active');
-            document.getElementById('pause-screen').classList.remove('active');
-            
-            spawnInterval = setInterval(spawnFrog, state.spawnDelay);
-            difficultyInterval = setInterval(increaseDifficulty, 2500);
-            gameTimeInterval = setInterval(updateGameTime, 1000);
-        }
-
-        function togglePause() {
-            if (!state.active) return;
-            
-            state.paused = !state.paused;
-            
-            if (state.paused) {
-                document.getElementById('pause-screen').classList.add('active');
-            } else {
-                document.getElementById('pause-screen').classList.remove('active');
-            }
-        }
-
-        function showMainMenu() {
-            state.active = false;
-            state.paused = false;
-            clearInterval(spawnInterval);
-            clearInterval(difficultyInterval);
-            clearInterval(gameTimeInterval);
-            
-            state.frogs.forEach(frog => frog.remove());
-            state.frogs.clear();
-            
-            document.getElementById('main-menu').style.display = 'flex';
-            document.getElementById('game-over').classList.remove('active');
-            document.getElementById('collection-modal').classList.remove('active');
-            document.getElementById('pause-screen').classList.remove('active');
-        }
-
-        function updateCollection() {
-            const grid = document.getElementById('collection-grid');
-            grid.innerHTML = '';
-            
-            for (const [key, data] of Object.entries(frogTypes)) {
-                const item = document.createElement('div');
-                item.className = 'collection-item';
-                item.style.setProperty('--item-color', data.color);
-                
-                if (state.discovered.has(key)) {
-                    item.classList.add('discovered');
-                    item.innerHTML = `
-                        <h3>${data.name}</h3>
-                        <p>${data.description}</p>
-                        <div class="collection-stats">
-                            점수: ${data.points} | 수명: ${(data.lifespan/1000).toFixed(1)}초
-                        </div>
-                    `;
-                } else {
-                    item.classList.add('locked');
-                    item.innerHTML = `
-                        <h3>???</h3>
-                        <p>아직 발견하지 못한 독두껍</p>
-                    `;
-                }
-                
-                grid.appendChild(item);
-            }
-        }
-
-        // 이벤트 리스너 설정
-        document.getElementById('start-btn').addEventListener('click', startGame);
-        document.getElementById('collection-menu-btn').addEventListener('click', () => {
-            updateCollection();
-            document.getElementById('collection-modal').classList.add('active');
-        });
-        document.getElementById('how-to-play-btn').addEventListener('click', () => {
-            alert("조랄두껍잡기");
-        });
-
-        document.getElementById('close-collection').addEventListener('click', () => {
-            document.getElementById('collection-modal').classList.remove('active');
-        });
-
-        document.getElementById('restart-btn').addEventListener('click', startGame);
-        document.getElementById('collection-gameover-btn').addEventListener('click', () => {
-            updateCollection();
-            document.getElementById('collection-modal').classList.add('active');
-        });
-        document.getElementById('main-menu-btn').addEventListener('click', showMainMenu);
-
-        document.getElementById('pause-btn').addEventListener('click', togglePause);
-        document.getElementById('resume-btn').addEventListener('click', togglePause);
-        document.getElementById('pause-collection-btn').addEventListener('click', () => {
-            updateCollection();
-            document.getElementById('collection-modal').classList.add('active');
-        });
-        document.getElementById('pause-main-menu-btn').addEventListener('click', showMainMenu);
-
-        // 게임 시작 시 메인 메뉴 표시
-        showMainMenu();
-    </script>
+  loadSave(); 
+  applyAudioSettings(); 
+  showMainMenu();
+  initDebugMode();
+  </script>
 </body>
 </html>
