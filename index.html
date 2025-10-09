@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -456,7 +457,6 @@
       animation: bossPulse 1s infinite;
     }
     
-    /* 이로치독 효과 */
     .frog.shiny video{
       filter: brightness(1.6) saturate(1.8);
       border:4px solid #FFD700;
@@ -464,7 +464,6 @@
       animation: shinyPulse 0.8s infinite;
     }
     
-    /* 이로치독 파티클 - 최적화 */
     .shiny-particle{
       position: absolute;
       width: 4px;
@@ -519,7 +518,6 @@
       box-shadow:0 0 10px #ff0000;
     }
     
-    /* 타격 링 이펙트 */
     .hit-ring{
       position: absolute;
       border: 3px solid #fff;
@@ -572,7 +570,6 @@
     
     body.shake{animation: screenShake .5s}
 
-    /* 대미지 효과 - 두껍 풀스크린 */
     #damage-flash{
       position:fixed; 
       inset:0; 
@@ -818,7 +815,6 @@
       background:#1f1a0a;
     }
 
-    /* 디버그 모드 */
     #debug-panel{
       position: fixed;
       bottom: 0;
@@ -905,6 +901,7 @@
   </style>
 </head>
 <body>
+  <!-- 게임 UI -->
   <div id="ui">
     <div id="score">0</div>
     <div id="lives">
@@ -928,6 +925,7 @@
   <button id="pause-btn" aria-label="일시정지">일시정지</button>
   <div id="touch-hint">TIP: 독두껍들을 눌러서 처치하세요!</div>
 
+  <!-- 일시정지 화면 -->
   <div id="pause-screen" class="screen">
     <div class="panel">
       <h1>일시정지</h1>
@@ -940,6 +938,7 @@
     </div>
   </div>
 
+  <!-- 메인 메뉴 -->
   <div id="main-menu">
     <h1>조랄두껍</h1>
     <h2>독두껍들을 잡아라!</h2>
@@ -952,6 +951,7 @@
     <div style="margin-top:14px; font-size:14px; color:#bbb" id="highscore-label">최고 점수: 0</div>
   </div>
 
+  <!-- 도감 모달 -->
   <div id="collection-modal" class="modal">
     <div id="collection-content" class="panel">
       <h2>두껍 도감</h2>
@@ -969,12 +969,13 @@
     </div>
   </div>
 
+  <!-- 게임 방법 모달 -->
   <div id="howto-modal" class="modal">
     <div class="panel">
       <h2>게임 방법</h2>
-      <ol style="line-height:1.8; margin:14px 0; padding-left:20px; color:#ddd">
-        <li>화면에 나타나는 <strong>독두껍</strong>을 빠르게 터치/클릭
-        <li>두껍마다 다른 <strong>점수, 속도, 특수능력</strong>이 있음
+      <ol style="margin:12px 0; padding-left:20px; line-height:1.8">
+        <li>화면에 나타나는 <strong>독두껍</strong>들을 클릭/터치하여 잡기
+        <li>두껍이 중앙에 도착하기 전에 잡아야 함
         <li>빠르게 연속으로 잡으면 <strong>콤보</strong>가 올라가고 점수 보너스
         <li>놓치면 <strong>하트 1개</strong>가 사라짐. 하트 0개면 게임오버
         <li>일부 두껍은 <strong>순간이동/돌진/최면</strong> 등 특수 행동을 함
@@ -988,6 +989,7 @@
     </div>
   </div>
 
+  <!-- 설정 모달 -->
   <div id="settings-modal" class="modal">
     <div class="panel">
       <h2>설정</h2>
@@ -1014,6 +1016,7 @@
     </div>
   </div>
 
+  <!-- 점수 기록 모달 -->
   <div id="score-log-modal" class="modal">
     <div class="panel">
       <h2>점수 기록</h2>
@@ -1022,6 +1025,19 @@
     </div>
   </div>
 
+  <!-- 게임오버 화면 -->
+  <div id="game-over">
+    <h1>게임 오버</h1>
+    <div id="final-stats"></div>
+    <div class="menu-row">
+      <button class="game-over-btn" id="restart-btn">다시 시작</button>
+      <button class="game-over-btn" id="collection-gameover-btn">도감</button>
+      <button class="game-over-btn" id="score-log-btn">기록</button>
+      <button class="game-over-btn" id="main-menu-btn">메뉴</button>
+    </div>
+  </div>
+
+  <!-- 디버그 패널 -->
   <div id="debug-panel">
     <h3>🐸 DEBUG MODE</h3>
     <div class="debug-controls">
@@ -1033,6 +1049,7 @@
   </div>
 
   <script>
+  // 세이브 시스템
   const STORAGE_KEY = 'joraldukkup.save.v2';
   const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
   
@@ -1057,6 +1074,7 @@
       console.warn('로드 실패', e) 
     }
     
+    // UI에 최고 점수 표시
     document.getElementById('highscore-label').textContent = `최고 점수: ${SAVE.highScore || 0}`;
     document.getElementById('sfx-toggle').checked = !!SAVE.settings.sfx;
     document.getElementById('sfx-volume').value = SAVE.settings.sfxVol ?? 0.7;
@@ -1072,6 +1090,7 @@
     } 
   }
   
+  // 디바운스 함수 - 저장 남발 방지
   function debounce(fn, ms){ 
     let t; 
     return (...a)=>{ 
@@ -1081,6 +1100,7 @@
   }
   const saveDebounced = debounce(saveNow, 250);
 
+  // 게임 기록 추가
   function addGameRecord(score, time, difficulty, shinyCaught){
     const record = {
       score: score,
@@ -1095,6 +1115,7 @@
     saveNow();
   }
 
+  // 점수 기록 표시
   function showScoreLog(){
     const logDiv = document.getElementById('score-log');
     
@@ -1159,9 +1180,10 @@
   
   let damageAudioPool = [];
   let deathAudioPool = [];
-  let currentDeathSound = null; // 현재 재생중인 사망 효과음
+  let currentDeathSound = null;
   let audioUnlocked = false;
   
+  // 오디오 풀 생성
   function createAudioPool(urls, count = 3){
     const pool = [];
     urls.forEach(url => {
@@ -1188,7 +1210,7 @@
     if(!SAVE.settings.sfx) return;
     const sound = deathAudioPool[Math.floor(Math.random() * deathAudioPool.length)];
     sound.volume = SAVE.settings.sfxVol ?? 0.7;
-    currentDeathSound = sound; // 현재 재생중인 사운드 추적
+    currentDeathSound = sound;
     try{
       sound.currentTime = 0;
       sound.play().catch(()=>{});
@@ -1233,9 +1255,10 @@
   }
   
   function applyAudioSettings(){
-    // 볼륨은 재생 시점에 적용
+    // 볼륨은 재생 시점에 적용됨
   }
   
+  // 오디오 언락 (첫 터치 시)
   function unlockAudioOnce(){ 
     if(audioUnlocked) return;
     
@@ -1252,6 +1275,7 @@
     document.removeEventListener('pointerdown', unlockAudioOnce); 
   }
 
+  // 게임 상태
   const state = {
     score: 0, 
     lives: 5, 
@@ -1271,19 +1295,20 @@
     gameTime:0, 
     difficultyLevel:0,
     shinyCaughtThisGame: 0,
-    lastMissedFrogType: null, // 마지막으로 놓친 두꺼비 타입
+    lastMissedFrogType: null,
     difficultyNames: ['초급','중급','고급','고수','지옥','지랄','게이','두껍','울티메이트두껍레전드']
   };
   
   let debugMode = false;
   let debugRandomSpawn = true;
   
+  // URL 해시로 디버그 모드 활성화
   if(window.location.hash === '#debug'){
     debugMode = true;
     document.getElementById('debug-panel').classList.add('active');
   }
 
-  // 두껍 데이터 - 스폰 확률 조정
+  // 두껍 데이터
   const frogTypes = {
     chingu:{ name:'친구껍', video:'https://media.tenor.com/qSQ3mTn58vgAAAPo/frog-eat.mp4', lifespan:2500, points:15, size:80, maxSize:280, spawnChance:0.30, color:'#4CAF50', description:'배고픈 친구. 먹이를 찾고있다.', behavior:'normal'},
     shinnan:{ name:'신난두껍', video:'https://media.tenor.com/tLf4YbvzJ6sAAAPo/yee-toad.mp4', lifespan:2400, points:18, size:75, maxSize:270, spawnChance:0.25, color:'#FFEB3B', description:'항상 신남. 기분 업!', behavior:'excited'},
@@ -1305,6 +1330,7 @@
 
   let spawnInterval, difficultyInterval, gameTimeInterval;
 
+  // UI 업데이트
   function updateUI(){
     const scoreEl = document.getElementById('score');
     scoreEl.textContent = state.score;
@@ -1325,7 +1351,7 @@
     document.getElementById('difficulty-display').textContent = `난이도: ${state.difficultyNames[state.difficultyLevel]}`;
   }
 
-  // 이로치독 파티클 생성 - 최적화
+  // 이로치독 파티클
   function createShinyParticles(frog, x, y, size){
     const particleInterval = setInterval(() => {
       if(!document.body.contains(frog)){
@@ -1333,7 +1359,6 @@
         return;
       }
       
-      // 1개만 생성으로 감소
       const particle = document.createElement('div');
       particle.className = 'shiny-particle';
       
@@ -1350,11 +1375,12 @@
       document.body.appendChild(particle);
       
       setTimeout(() => particle.remove(), 1500);
-    }, 400); // 400ms마다 생성
+    }, 400);
     
     frog.dataset.particleInterval = particleInterval;
   }
 
+  // 피 파티클 생성
   function createBloodParticles(x,y,count=28){
     for(let i=0;i<count;i++){
       const particle = document.createElement('div');
@@ -1386,6 +1412,7 @@
     }
   }
   
+  // 타격 링 생성
   function createHitRing(x, y){
     const ring = document.createElement('div');
     ring.className = 'hit-ring';
@@ -1395,11 +1422,13 @@
     setTimeout(() => ring.remove(), 600);
   }
   
+  // 화면 흔들기
   function screenShake(){ 
     document.body.classList.add('shake'); 
     setTimeout(()=>document.body.classList.remove('shake'), 500) 
   }
   
+  // 점수 팝업
   function showScorePopup(x,y,points,color='#fff'){ 
     const p=document.createElement('div'); 
     p.className='score-popup'; 
@@ -1411,7 +1440,7 @@
     setTimeout(()=>p.remove(), 820) 
   }
   
-  // 대미지 효과 - 두껍 풀스크린
+  // 대미지 효과
   function damageFlash(frogType){ 
     const flash = document.getElementById('damage-flash');
     const video = document.getElementById('damage-video');
@@ -1432,14 +1461,16 @@
       flash.classList.remove('active');
       video.pause();
       video.src = '';
-    }, 500); // 0.5초 표시
+    }, 500);
   }
   
+  // 진동
   function maybeVibrate(pattern=[12]){ 
     if(!SAVE.settings.vibration) return; 
     if(navigator.vibrate) try{ navigator.vibrate(pattern) }catch{} 
   }
   
+  // 특수 효과
   function createSpecialEffect(x,y,type){ 
     const e=document.createElement('div'); 
     e.className='special-effect'; 
@@ -1459,6 +1490,7 @@
     } 
   }
 
+  // 보스 스폰
   function spawnBoss(){ 
     if(state.bossActive) return; 
     
@@ -1576,6 +1608,7 @@
     document.getElementById('boss-hp-fill').style.width = Math.max(0,pct)+'%'; 
   }
 
+  // 두껍 수동 스폰 (디버그용)
   function spawnFrogManual(key, forceShiny = false){
     const data = frogTypes[key];
     if(!data || key === 'boss' || key === 'shiny') return;
@@ -1710,7 +1743,7 @@
         }
         frog.remove(); 
         state.frogs.delete(frog);
-        state.lastMissedFrogType = key; // 놓친 두껍 타입 저장
+        state.lastMissedFrogType = key;
         if(state.active) loseLife(); 
         return 
       }
@@ -1771,6 +1804,7 @@
     frog.addEventListener('click', onHit);
   }
   
+  // 두껍 랜덤 스폰
   function spawnFrog(){ 
     if(!state.active||state.paused) return; 
     
@@ -1788,7 +1822,7 @@
         } 
         continue 
       }
-      if(k==='shiny') continue; // 이로치독은 랜덤 스폰 제외
+      if(k==='shiny') continue;
       
       cumulative += d.spawnChance; 
       if(rand < cumulative){ 
@@ -1800,6 +1834,7 @@
     spawnFrogManual(key);
   }
 
+  // 생명력 감소
   function loseLife(){ 
     state.lives--; 
     state.combo=0; 
@@ -1819,6 +1854,7 @@
     if(state.lives<=0) gameOver(); 
   }
   
+  // 난이도 증가
   function increaseDifficulty(){ 
     if(!state.active||state.spawnDelay<=state.minSpawnDelay||state.paused) return; 
     
@@ -1830,11 +1866,13 @@
     updateUI(); 
   }
   
+  // 게임 시간 업데이트
   function updateGameTime(){ 
     if(!state.active||state.paused) return; 
     state.gameTime = Date.now() - state.startTime 
   }
 
+  // 게임 오버
   function gameOver(){ 
     state.active=false; 
     clearInterval(spawnInterval); 
@@ -1877,8 +1915,9 @@
     document.getElementById('game-over').classList.add('active');
   }
   
+  // 게임 시작
   function startGame(){ 
-    stopDeathSound(); // 사망 효과음 정지
+    stopDeathSound();
     
     state.score=0; 
     state.lives=5; 
@@ -1912,14 +1951,16 @@
     gameTimeInterval = setInterval(updateGameTime, 1000);
   }
   
+  // 일시정지 토글
   function togglePause(){ 
     if(!state.active) return; 
     state.paused = !state.paused; 
     document.getElementById('pause-screen').classList.toggle('active', state.paused) 
   }
   
+  // 메인 메뉴로
   function showMainMenu(){ 
-    stopDeathSound(); // 사망 효과음 정지
+    stopDeathSound();
     
     state.active=false; 
     state.paused=false; 
@@ -1939,6 +1980,7 @@
     document.getElementById('pause-screen').classList.remove('active'); 
   }
 
+  // 도감 업데이트
   function updateCollection(filter='all'){
     const grid=document.getElementById('collection-grid'); 
     grid.innerHTML='';
@@ -2007,6 +2049,7 @@
     }
   }
   
+  // 디버그 모드 초기화
   function initDebugMode(){
     if(!debugMode) return;
     
@@ -2047,11 +2090,13 @@
     });
   }
 
+  // 이벤트 리스너 - UI 클릭 사운드
   const buttons = document.querySelectorAll('.menu-btn, .pause-btn, .game-over-btn, .close-btn, .chip');
   buttons.forEach(btn => {
     btn.addEventListener('click', playUIClick);
   });
 
+  // 메인 메뉴 버튼들
   document.getElementById('start-btn').addEventListener('click', startGame);
   document.getElementById('collection-menu-btn').addEventListener('click', ()=>{ 
     updateCollection(); 
@@ -2064,6 +2109,7 @@
     document.getElementById('settings-modal').classList.add('active') 
   });
 
+  // 도감 관련
   document.getElementById('close-collection').addEventListener('click', ()=> 
     document.getElementById('collection-modal').classList.remove('active')
   );
@@ -2076,6 +2122,7 @@
     })
   );
 
+  // 일시정지 관련
   document.getElementById('pause-btn').addEventListener('click', togglePause);
   document.getElementById('resume-btn').addEventListener('click', togglePause);
   document.getElementById('pause-collection-btn').addEventListener('click', ()=>{ 
@@ -2087,9 +2134,12 @@
     document.getElementById('settings-modal').classList.add('active') 
   });
 
+  // 게임 방법
   document.getElementById('howto-close').addEventListener('click', ()=> 
     document.getElementById('howto-modal').classList.remove('active')
   );
+  
+  // 설정
   document.getElementById('settings-close').addEventListener('click', ()=> 
     document.getElementById('settings-modal').classList.remove('active')
   );
@@ -2167,6 +2217,7 @@
     } 
   });
 
+  // 게임오버 버튼들
   document.getElementById('restart-btn').addEventListener('click', ()=>{
     document.getElementById('game-over').classList.remove('active');
     startGame();
@@ -2185,17 +2236,21 @@
     document.getElementById('score-log-modal').classList.remove('active')
   );
 
+  // 오디오 언락
   document.body.addEventListener('pointerdown', unlockAudioOnce, {passive:true});
   document.body.addEventListener('touchstart', ()=>{}, {passive:true});
   
+  // 모바일 힌트
   if(isMobile){ 
     const hint=document.getElementById('touch-hint'); 
     setTimeout(()=>hint.classList.add('show'), 300); 
     setTimeout(()=>hint.classList.remove('show'), 3000); 
   }
 
+  // 우클릭 방지
   window.addEventListener('contextmenu', e=>e.preventDefault());
 
+  // 초기화
   loadSave(); 
   applyAudioSettings(); 
   showMainMenu();
