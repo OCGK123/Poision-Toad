@@ -225,24 +225,6 @@
       overflow: hidden;
     }
     
-    .menu-btn::before{
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      border-radius: 50%;
-      background: rgba(255,255,0,0.5);
-      transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
-    }
-    
-    .menu-btn:hover::before{
-      width: 300px;
-      height: 300px;
-    }
-    
     .menu-btn:hover{
       background:#ffff00; 
       transform:translateY(-4px) scale(1.02);
@@ -588,22 +570,20 @@
       opacity:0.9;
     }
     
-    #damage-text{
-      position:absolute;
-      top:50%;
-      left:50%;
-      transform:translate(-50%, -50%);
-      font-size:clamp(60px, 15vw, 150px);
+    .damage-text{
+      position:fixed;
+      font-size:clamp(50px, 12vw, 120px);
       font-weight:900;
-      color:#ff0000;
-      text-shadow: 0 0 30px #ff0000, 0 0 60px #ff0000;
+      color:#fff;
+      text-shadow: 0 0 20px #fff;
       z-index:8001;
+      pointer-events:none;
       animation: damageFlicker 0.1s steps(1) 5;
     }
     
     @keyframes damageFlicker{
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
+      0%, 100% { color: #fff; }
+      50% { color: #000; }
     }
 
     #game-over{
@@ -670,12 +650,6 @@
     #pause-screen h1{
       font-size:clamp(32px, 8vw, 64px); 
       margin-bottom:16px;
-    }
-    
-    .pause-btn{
-      font-size:clamp(14px, 3.2vw, 20px); 
-      font-weight:700; 
-      margin:8px;
     }
 
     .special-effect{
@@ -901,7 +875,6 @@
   </style>
 </head>
 <body>
-  <!-- 게임 UI -->
   <div id="ui">
     <div id="score">0</div>
     <div id="lives">
@@ -919,13 +892,11 @@
   </div>
   <div id="damage-flash">
     <video id="damage-video" muted playsinline></video>
-    <div id="damage-text"></div>
   </div>
   <div id="combo-display">콤보 x<span id="combo-count">0</span></div>
   <button id="pause-btn" aria-label="일시정지">일시정지</button>
   <div id="touch-hint">TIP: 독두껍들을 눌러서 처치하세요!</div>
 
-  <!-- 일시정지 화면 -->
   <div id="pause-screen" class="screen">
     <div class="panel">
       <h1>일시정지</h1>
@@ -938,7 +909,6 @@
     </div>
   </div>
 
-  <!-- 메인 메뉴 -->
   <div id="main-menu">
     <h1>조랄두껍</h1>
     <h2>독두껍들을 잡아라!</h2>
@@ -951,7 +921,6 @@
     <div style="margin-top:14px; font-size:14px; color:#bbb" id="highscore-label">최고 점수: 0</div>
   </div>
 
-  <!-- 도감 모달 -->
   <div id="collection-modal" class="modal">
     <div id="collection-content" class="panel">
       <h2>두껍 도감</h2>
@@ -969,7 +938,6 @@
     </div>
   </div>
 
-  <!-- 게임 방법 모달 -->
   <div id="howto-modal" class="modal">
     <div class="panel">
       <h2>게임 방법</h2>
@@ -980,7 +948,7 @@
         <li>놓치면 <strong>하트 1개</strong>가 사라짐. 하트 0개면 게임오버
         <li>일부 두껍은 <strong>순간이동/돌진/최면</strong> 등 특수 행동을 함
         <li>보스가 나오면 <strong>HP를 0</strong>으로 만들어야한다!
-        <li><strong style="color:#FFD700">✨ 이로치독두껍</strong>: 5% 확율로 점수 2.5배
+        <li><strong style="color:#FFD700">✨ 이로치독두껍</strong>: 5% 확률로 점수 2.5배
       </ol>
       <p style="margin-top:10px; color:#bbb">모든 진행도와 도감은 자동 저장됨. 설정에서 초기화 가능</p>
       <div class="menu-row" style="margin-top:10px">
@@ -989,15 +957,20 @@
     </div>
   </div>
 
-  <!-- 설정 모달 -->
   <div id="settings-modal" class="modal">
     <div class="panel">
       <h2>설정</h2>
       <div class="row" style="margin:8px 0 14px">
+        <span class="label">배경음악</span>
+        <input type="checkbox" id="bgm-toggle" class="switch" />
+        <input type="range" id="bgm-volume" class="range" min="0" max="1" step="0.01" />
+        <span id="bgm-vol-label" class="label">50%</span>
+      </div>
+      <div class="row" style="margin:8px 0 14px">
         <span class="label">효과음</span>
         <input type="checkbox" id="sfx-toggle" class="switch" />
         <input type="range" id="sfx-volume" class="range" min="0" max="1" step="0.01" />
-        <span id="sfx-vol-label" class="label">100%</span>
+        <span id="sfx-vol-label" class="label">70%</span>
       </div>
       <div class="row" style="margin:8px 0 14px">
         <span class="label">진동 (모바일)</span>
@@ -1016,7 +989,6 @@
     </div>
   </div>
 
-  <!-- 점수 기록 모달 -->
   <div id="score-log-modal" class="modal">
     <div class="panel">
       <h2>점수 기록</h2>
@@ -1025,7 +997,6 @@
     </div>
   </div>
 
-  <!-- 게임오버 화면 -->
   <div id="game-over">
     <h1>게임 오버</h1>
     <div id="final-stats"></div>
@@ -1037,19 +1008,18 @@
     </div>
   </div>
 
-  <!-- 디버그 패널 -->
   <div id="debug-panel">
     <h3>🐸 DEBUG MODE</h3>
     <div class="debug-controls">
       <button class="debug-btn" id="toggle-random-spawn">랜덤 스폰: ON</button>
       <button class="debug-btn" id="clear-all-frogs">모두 제거</button>
+      <button class="debug-btn" id="spawn-boss-debug">보스 소환</button>
     </div>
     <h4 style="color:#888; margin-top:8px; margin-bottom:8px; font-size:14px;">두껍 수동 스폰:</h4>
     <div class="frog-spawner" id="frog-spawner"></div>
   </div>
 
   <script>
-  // 세이브 시스템
   const STORAGE_KEY = 'joraldukkup.save.v2';
   const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
   
@@ -1059,7 +1029,7 @@
     totals: { hits: 0, misses: 0, bossesDefeated: 0, shinyCaught: 0 },
     stats: {},
     gameHistory: [],
-    settings: { sfx: true, sfxVol: 0.7, vibration: true }
+    settings: { bgm: true, bgmVol: 0.5, sfx: true, sfxVol: 0.7, vibration: true }
   };
   
   function loadSave(){
@@ -1069,13 +1039,17 @@
         const parsed = JSON.parse(raw); 
         SAVE = Object.assign({}, SAVE, parsed);
         if(!SAVE.gameHistory) SAVE.gameHistory = [];
+        if(!SAVE.settings.bgm) SAVE.settings.bgm = true;
+        if(SAVE.settings.bgmVol === undefined) SAVE.settings.bgmVol = 0.5;
       }
     } catch(e){ 
       console.warn('로드 실패', e) 
     }
     
-    // UI에 최고 점수 표시
     document.getElementById('highscore-label').textContent = `최고 점수: ${SAVE.highScore || 0}`;
+    document.getElementById('bgm-toggle').checked = !!SAVE.settings.bgm;
+    document.getElementById('bgm-volume').value = SAVE.settings.bgmVol ?? 0.5;
+    document.getElementById('bgm-vol-label').textContent = `${Math.round((SAVE.settings.bgmVol ?? 0.5)*100)}%`;
     document.getElementById('sfx-toggle').checked = !!SAVE.settings.sfx;
     document.getElementById('sfx-volume').value = SAVE.settings.sfxVol ?? 0.7;
     document.getElementById('sfx-vol-label').textContent = `${Math.round((SAVE.settings.sfxVol ?? 0.7)*100)}%`;
@@ -1083,6 +1057,7 @@
   }
   
   function saveNow(){ 
+    if(debugMode) return; // 디버그 모드에서는 저장 안함
     try{ 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(SAVE)); 
     }catch(e){ 
@@ -1090,7 +1065,6 @@
     } 
   }
   
-  // 디바운스 함수 - 저장 남발 방지
   function debounce(fn, ms){ 
     let t; 
     return (...a)=>{ 
@@ -1100,8 +1074,8 @@
   }
   const saveDebounced = debounce(saveNow, 250);
 
-  // 게임 기록 추가
   function addGameRecord(score, time, difficulty, shinyCaught){
+    if(debugMode) return; // 디버그 모드에서는 기록 안함
     const record = {
       score: score,
       time: time,
@@ -1115,7 +1089,6 @@
     saveNow();
   }
 
-  // 점수 기록 표시
   function showScoreLog(){
     const logDiv = document.getElementById('score-log');
     
@@ -1136,7 +1109,52 @@
     document.getElementById('score-log-modal').classList.add('active');
   }
 
-  // 오디오 시스템
+  // 배경음악 시스템
+  const bgmMenu = new Audio('https://github.com/OCGK123/Poision-Toad/raw/refs/heads/main/menu.mp3');
+  const bgmGame = new Audio('https://github.com/OCGK123/Poision-Toad/raw/refs/heads/main/infight.mp3');
+  const bgmBoss = new Audio('https://github.com/OCGK123/Poision-Toad/raw/refs/heads/main/bossfight.mp3');
+  
+  bgmMenu.loop = true;
+  bgmGame.loop = true;
+  bgmBoss.loop = true;
+  
+  let currentBGM = null;
+  
+  function playBGM(bgm){
+    if(!SAVE.settings.bgm) return;
+    if(currentBGM === bgm && !bgm.paused) return;
+    
+    // 모든 BGM 정지
+    [bgmMenu, bgmGame, bgmBoss].forEach(b => {
+      b.pause();
+      b.currentTime = 0;
+    });
+    
+    currentBGM = bgm;
+    bgm.volume = SAVE.settings.bgmVol ?? 0.5;
+    bgm.play().catch(()=>{});
+  }
+  
+  function stopAllBGM(){
+    [bgmMenu, bgmGame, bgmBoss].forEach(b => {
+      b.pause();
+      b.currentTime = 0;
+    });
+    currentBGM = null;
+  }
+  
+  function applyBGMSettings(){
+    const vol = SAVE.settings.bgmVol ?? 0.5;
+    [bgmMenu, bgmGame, bgmBoss].forEach(b => b.volume = vol);
+    
+    if(!SAVE.settings.bgm){
+      stopAllBGM();
+    } else if(currentBGM && currentBGM.paused){
+      currentBGM.play().catch(()=>{});
+    }
+  }
+
+  // 효과음 시스템
   const uiClickSound = new Audio('https://www.myinstants.com/media/sounds/voice_sans.mp3');
   const hitSound = new Audio('https://github.com/OCGK123/Poision-Toad/raw/refs/heads/main/Toad.mp3');
   const spawnSound = new Audio('https://www.myinstants.com/media/sounds/whoosh-wind.mp3');
@@ -1171,11 +1189,7 @@
     'https://www.myinstants.com/media/sounds/wild-hunt-limbus-company.mp3',
     'https://www.myinstants.com/media/sounds/67-kid.mp3',
     'https://www.myinstants.com/media/sounds/bankai-byakuya.mp3',
-    'https://www.myinstants.com/media/sounds/noo-la-policia.mp3',
-    'https://www.myinstants.com/media/sounds/steal-a-brainrot-los-tralaleritos.mp3',
-    'https://www.myinstants.com/media/sounds/steal-a-brainrot-las-tralaleritas.mp3',
-    'https://www.myinstants.com/media/sounds/steal-a-brainrot-bambino-tralalero-tralala.mp3',
-    'https://www.myinstants.com/media/sounds/bombardino-crocodilo_MSpHN9M.mp3'
+    'https://www.myinstants.com/media/sounds/noo-la-policia.mp3'
   ];
   
   let damageAudioPool = [];
@@ -1183,7 +1197,6 @@
   let currentDeathSound = null;
   let audioUnlocked = false;
   
-  // 오디오 풀 생성
   function createAudioPool(urls, count = 3){
     const pool = [];
     urls.forEach(url => {
@@ -1255,17 +1268,16 @@
   }
   
   function applyAudioSettings(){
-    // 볼륨은 재생 시점에 적용됨
+    // 효과음은 재생 시 볼륨 적용
   }
   
-  // 오디오 언락 (첫 터치 시)
   function unlockAudioOnce(){ 
     if(audioUnlocked) return;
     
     damageAudioPool = createAudioPool(damageSounds, 1);
     deathAudioPool = createAudioPool(deathSounds, 1);
     
-    [uiClickSound, hitSound, spawnSound, ...damageAudioPool, ...deathAudioPool].forEach(a=>{ 
+    [uiClickSound, hitSound, spawnSound, bgmMenu, bgmGame, bgmBoss, ...damageAudioPool, ...deathAudioPool].forEach(a=>{ 
       try{
         a.play().then(()=>a.pause()).catch(()=>{})
       }catch{}
@@ -1285,7 +1297,7 @@
     startTime: 0, 
     lastHitTime: 0,
     spawnDelay: 800, 
-    minSpawnDelay: 300, 
+    minSpawnDelay: 200, 
     frogs: new Set(), 
     discovered: new Set(), 
     bossActive:false,
@@ -1296,13 +1308,12 @@
     difficultyLevel:0,
     shinyCaughtThisGame: 0,
     lastMissedFrogType: null,
-    difficultyNames: ['초급','중급','고급','고수','지옥','지랄','게이','두껍','울티메이트두껍레전드']
+    difficultyNames: ['초급','중급','고급','고수','지옥','신','악마','전설','신화','초월','궁극','절대자','무한','영원','천상','우주']
   };
   
   let debugMode = false;
   let debugRandomSpawn = true;
   
-  // URL 해시로 디버그 모드 활성화
   if(window.location.hash === '#debug'){
     debugMode = true;
     document.getElementById('debug-panel').classList.add('active');
@@ -1324,13 +1335,12 @@
     sibi:{ name:'시비껍', video:'https://media.tenor.com/TO7MRzBkquMAAAPo/rawr-thumb.mp4', lifespan:1500, points:50, size:62, maxSize:190, spawnChance:0.03, color:'#FF1744', description:'공격적. 속도가 빠름', behavior:'aggressive'},
     rush:{ name:'돌격껍', video:'https://media.tenor.com/3ymk3wPLjUwAAAPo/toad.mp4', lifespan:1100, points:60, size:60, maxSize:180, spawnChance:0.02, color:'#F44336', description:'초고속 돌진!', behavior:'rush'},
     nuclear:{ name:'핵독껍', video:'https://media.tenor.com/GEjoMjVhYuMAAAPo/futurama-hypnotoad.mp4', lifespan:2000, points:100, size:65, maxSize:250, spawnChance:0.01, color:'#FFD700', description:'최면 능력 보유', behavior:'hypnotize'},
-    shiny:{ name:'이로치독', video:'https://media.tenor.com/qSQ3mTn58vgAAAPo/frog-eat.mp4', lifespan:2500, points:150, size:80, maxSize:280, spawnChance:0, color:'#FFD700', description:'전설의 반짝이는 두껍. 5% 확률로 등장!', behavior:'shiny'},
+    shiny:{ name:'이로치독두껍', video:'https://media.tenor.com/qSQ3mTn58vgAAAPo/frog-eat.mp4', lifespan:2500, points:150, size:80, maxSize:280, spawnChance:0, color:'#FFD700', description:'전설의 반짝이는 두껍. 5% 확률로 등장!', behavior:'shiny'},
     boss:{ name:'여왕껍', video:'https://media.tenor.com/97gH8VzfSMQAAAPo/poke-frog.mp4', lifespan:999999, points:500, size:100, maxSize:450, spawnChance:0.002, color:'#ff00ff', description:'전설의 끝판왕', behavior:'boss'}
   };
 
   let spawnInterval, difficultyInterval, gameTimeInterval;
 
-  // UI 업데이트
   function updateUI(){
     const scoreEl = document.getElementById('score');
     scoreEl.textContent = state.score;
@@ -1351,7 +1361,6 @@
     document.getElementById('difficulty-display').textContent = `난이도: ${state.difficultyNames[state.difficultyLevel]}`;
   }
 
-  // 이로치독 파티클
   function createShinyParticles(frog, x, y, size){
     const particleInterval = setInterval(() => {
       if(!document.body.contains(frog)){
@@ -1380,7 +1389,6 @@
     frog.dataset.particleInterval = particleInterval;
   }
 
-  // 피 파티클 생성
   function createBloodParticles(x,y,count=28){
     for(let i=0;i<count;i++){
       const particle = document.createElement('div');
@@ -1412,7 +1420,6 @@
     }
   }
   
-  // 타격 링 생성
   function createHitRing(x, y){
     const ring = document.createElement('div');
     ring.className = 'hit-ring';
@@ -1422,13 +1429,11 @@
     setTimeout(() => ring.remove(), 600);
   }
   
-  // 화면 흔들기
   function screenShake(){ 
     document.body.classList.add('shake'); 
     setTimeout(()=>document.body.classList.remove('shake'), 500) 
   }
   
-  // 점수 팝업
   function showScorePopup(x,y,points,color='#fff'){ 
     const p=document.createElement('div'); 
     p.className='score-popup'; 
@@ -1440,11 +1445,9 @@
     setTimeout(()=>p.remove(), 820) 
   }
   
-  // 대미지 효과
   function damageFlash(frogType){ 
     const flash = document.getElementById('damage-flash');
     const video = document.getElementById('damage-video');
-    const text = document.getElementById('damage-text');
     
     const frogData = frogTypes[frogType];
     if(!frogData) return;
@@ -1453,7 +1456,17 @@
     video.load();
     video.play().catch(()=>{});
     
-    text.textContent = `두껍${frogData.name}!!@!#@#`;
+    // 5개의 랜덤 위치에 깜빡이는 텍스트 생성
+    for(let i = 0; i < 5; i++){
+      const text = document.createElement('div');
+      text.className = 'damage-text';
+      text.textContent = `${frogData.name}!!`;
+      text.style.left = (10 + Math.random() * 80) + '%';
+      text.style.top = (10 + Math.random() * 80) + '%';
+      document.body.appendChild(text);
+      
+      setTimeout(() => text.remove(), 500);
+    }
     
     flash.classList.add('active');
     
@@ -1464,13 +1477,11 @@
     }, 500);
   }
   
-  // 진동
   function maybeVibrate(pattern=[12]){ 
     if(!SAVE.settings.vibration) return; 
     if(navigator.vibrate) try{ navigator.vibrate(pattern) }catch{} 
   }
   
-  // 특수 효과
   function createSpecialEffect(x,y,type){ 
     const e=document.createElement('div'); 
     e.className='special-effect'; 
@@ -1490,13 +1501,15 @@
     } 
   }
 
-  // 보스 스폰
   function spawnBoss(){ 
     if(state.bossActive) return; 
     
     state.bossActive=true; 
-    state.bossHP = 15 + state.difficultyLevel*5; 
+    state.bossHP = 20 + state.difficultyLevel*8; 
     state.maxBossHP = state.bossHP;
+    
+    // 보스 브금 재생
+    playBGM(bgmBoss);
     
     const data=frogTypes.boss; 
     const frog=document.createElement('div'); 
@@ -1517,9 +1530,12 @@
     
     state.bossFrog=frog; 
     state.frogs.add(frog); 
-    state.discovered.add('boss'); 
-    SAVE.discovered['boss']=true; 
-    saveDebounced();
+    
+    if(!debugMode){
+      state.discovered.add('boss'); 
+      SAVE.discovered['boss']=true; 
+      saveDebounced();
+    }
     
     document.getElementById('boss-hp-container').classList.add('active'); 
     updateBossHP();
@@ -1530,16 +1546,16 @@
       if(destroyed||!state.active||state.paused) return; 
       
       const el=Date.now()-start; 
-      const prog=Math.min(el/5000,1); 
+      const prog=Math.min(el/8000,1); 
       size = data.size + Math.pow(prog,1.5)*(data.maxSize-data.size);
       
-      if(Date.now()-changeT>1500){ 
+      if(Date.now()-changeT>1200){ 
         ang=Math.random()*Math.PI*2; 
         changeT=Date.now() 
       }
       
-      x += Math.cos(ang)*(2+state.difficultyLevel*0.5); 
-      y += Math.sin(ang)*(2+state.difficultyLevel*0.5);
+      x += Math.cos(ang)*(3+state.difficultyLevel*0.8); 
+      y += Math.sin(ang)*(3+state.difficultyLevel*0.8);
       
       x = Math.max(size/2, Math.min(innerWidth - size/2, x)); 
       y = Math.max(size/2, Math.min(innerHeight - size/2, y));
@@ -1551,12 +1567,12 @@
         height:size+'px' 
       });
       
-      if(Date.now()-atkT>3000){ 
+      if(Date.now()-atkT>2500){ 
         atkT=Date.now(); 
         createSpecialEffect(x,y,'hypnotize') 
       }
       
-      if(Math.random()<0.005 && state.bossHP<state.maxBossHP){ 
+      if(Math.random()<0.003 && state.bossHP<state.maxBossHP){ 
         state.bossHP=Math.min(state.maxBossHP, state.bossHP+1); 
         updateBossHP() 
       }
@@ -1577,7 +1593,7 @@
       screenShake(); 
       maybeVibrate([8,30,8]);
       
-      const damage=50; 
+      const damage=60; 
       state.score+=damage; 
       updateUI(); 
       showScorePopup(x,y,damage,'#ff00ff');
@@ -1586,7 +1602,7 @@
         destroyed=true; 
         state.bossActive=false; 
         state.bossFrog=null; 
-        createBloodParticles(x,y,60); 
+        createBloodParticles(x,y,80); 
         screenShake(); 
         state.score+=data.points; 
         updateUI(); 
@@ -1594,8 +1610,14 @@
         frog.remove(); 
         state.frogs.delete(frog); 
         document.getElementById('boss-hp-container').classList.remove('active'); 
-        SAVE.totals.bossesDefeated++; 
-        saveDebounced(); 
+        
+        if(!debugMode){
+          SAVE.totals.bossesDefeated++; 
+          saveDebounced();
+        }
+        
+        // 보스 처치 후 일반 브금으로 복귀
+        playBGM(bgmGame);
       }
     }
     
@@ -1608,7 +1630,6 @@
     document.getElementById('boss-hp-fill').style.width = Math.max(0,pct)+'%'; 
   }
 
-  // 두껍 수동 스폰 (디버그용)
   function spawnFrogManual(key, forceShiny = false){
     const data = frogTypes[key];
     if(!data || key === 'boss' || key === 'shiny') return;
@@ -1635,23 +1656,24 @@
     frog.querySelector('video').style.borderColor = data.color; 
     document.body.appendChild(frog); 
     state.frogs.add(frog); 
-    state.discovered.add(key); 
-    SAVE.discovered[key]=true;
     
-    if(isShiny){
-      state.discovered.add('shiny');
-      SAVE.discovered['shiny']=true;
+    if(!debugMode){
+      state.discovered.add(key); 
+      SAVE.discovered[key]=true;
+      
+      if(isShiny){
+        state.discovered.add('shiny');
+        SAVE.discovered['shiny']=true;
+      }
     }
     
     playSpawnSound();
     
-    if(!SAVE.stats[key]) SAVE.stats[key]={caught:0,bestCombo:0,bestGain:0}; 
-    saveDebounced();
+    if(!SAVE.stats[key] && !debugMode) SAVE.stats[key]={caught:0,bestCombo:0,bestGain:0}; 
+    if(!debugMode) saveDebounced();
 
-    const cx = innerWidth / 2;
-    const cy = innerHeight / 2;
-    const margin = 100;
-    
+    // 화면 가장자리에서 시작, 화면 전체에 더 분산되게 목적지 설정
+    const margin = 50;
     const side = Math.floor(Math.random() * 4);
     let sx, sy;
     
@@ -1669,9 +1691,9 @@
       sy = innerHeight - margin;
     }
     
-    const maxOffset = Math.min(innerWidth, innerHeight) * 0.3;
-    const tx = cx + (Math.random() - 0.5) * maxOffset;
-    const ty = cy + (Math.random() - 0.5) * maxOffset;
+    // 목적지를 화면 전체에 더 넓게 분산
+    const tx = margin * 3 + Math.random() * (innerWidth - margin * 6);
+    const ty = margin * 3 + Math.random() * (innerHeight - margin * 6);
 
     let size=data.size, x=sx, y=sy, destroyed=false, start=Date.now(), danceOffset=0, flexT=0, grow=1, rushSpeed=0;
 
@@ -1679,7 +1701,7 @@
       if(destroyed||!state.active||state.paused) return; 
       
       const elapsed=Date.now()-start; 
-      const life = Math.max(500, data.lifespan - state.difficultyLevel*200); 
+      const life = Math.max(400, data.lifespan - state.difficultyLevel*250); 
       let progress=Math.min(elapsed/life,1); 
       let ease=1 - Math.pow(1-progress,3);
       
@@ -1781,7 +1803,7 @@
         basePoints = Math.floor(data.points * 2.5);
         finalColor = '#FFD700';
         state.shinyCaughtThisGame++;
-        SAVE.totals.shinyCaught++;
+        if(!debugMode) SAVE.totals.shinyCaught++;
       }
       
       const gain = Math.floor(basePoints * mult);
@@ -1792,19 +1814,20 @@
       frog.remove(); 
       state.frogs.delete(frog);
       
-      SAVE.totals.hits++; 
-      if(!SAVE.stats[key]) SAVE.stats[key]={caught:0,bestCombo:0,bestGain:0}; 
-      SAVE.stats[key].caught++; 
-      SAVE.stats[key].bestCombo = Math.max(SAVE.stats[key].bestCombo, state.combo); 
-      SAVE.stats[key].bestGain = Math.max(SAVE.stats[key].bestGain, gain); 
-      saveDebounced();
+      if(!debugMode){
+        SAVE.totals.hits++; 
+        if(!SAVE.stats[key]) SAVE.stats[key]={caught:0,bestCombo:0,bestGain:0}; 
+        SAVE.stats[key].caught++; 
+        SAVE.stats[key].bestCombo = Math.max(SAVE.stats[key].bestCombo, state.combo); 
+        SAVE.stats[key].bestGain = Math.max(SAVE.stats[key].bestGain, gain); 
+        saveDebounced();
+      }
     }
     
     frog.addEventListener('pointerdown', onHit, {passive:true});
     frog.addEventListener('click', onHit);
   }
   
-  // 두껍 랜덤 스폰
   function spawnFrog(){ 
     if(!state.active||state.paused) return; 
     
@@ -1816,7 +1839,7 @@
     
     for(const [k,d] of Object.entries(frogTypes)){
       if(k==='boss'){ 
-        if(rand<0.002 && !state.bossActive && state.score>1000){ 
+        if(rand<0.003 && !state.bossActive && state.score>800){ 
           spawnBoss(); 
           return 
         } 
@@ -1834,7 +1857,6 @@
     spawnFrogManual(key);
   }
 
-  // 생명력 감소
   function loseLife(){ 
     state.lives--; 
     state.combo=0; 
@@ -1848,31 +1870,32 @@
     
     screenShake(); 
     maybeVibrate([50]); 
-    SAVE.totals.misses++; 
-    saveDebounced(); 
+    
+    if(!debugMode){
+      SAVE.totals.misses++; 
+      saveDebounced();
+    }
     
     if(state.lives<=0) gameOver(); 
   }
   
-  // 난이도 증가
   function increaseDifficulty(){ 
     if(!state.active||state.spawnDelay<=state.minSpawnDelay||state.paused) return; 
     
-    state.spawnDelay = Math.max(state.minSpawnDelay, state.spawnDelay - 30); 
-    state.difficultyLevel = Math.min(4, Math.floor((800 - state.spawnDelay)/100)); 
+    // 난이도 증가 속도 대폭 강화
+    state.spawnDelay = Math.max(state.minSpawnDelay, state.spawnDelay - 45); 
+    state.difficultyLevel = Math.min(15, Math.floor((800 - state.spawnDelay)/40)); 
     
     clearInterval(spawnInterval); 
     spawnInterval = setInterval(spawnFrog, state.spawnDelay); 
     updateUI(); 
   }
   
-  // 게임 시간 업데이트
   function updateGameTime(){ 
     if(!state.active||state.paused) return; 
     state.gameTime = Date.now() - state.startTime 
   }
 
-  // 게임 오버
   function gameOver(){ 
     state.active=false; 
     clearInterval(spawnInterval); 
@@ -1886,36 +1909,40 @@
     }); 
     state.frogs.clear();
     
+    // BGM 정지
+    stopAllBGM();
+    
     playRandomDeathSound();
     
     const elapsed=(state.gameTime/1000).toFixed(1); 
     const discoveredCount = Object.keys(SAVE.discovered).length;
     
-    addGameRecord(
-      state.score, 
-      elapsed, 
-      state.difficultyNames[state.difficultyLevel],
-      state.shinyCaughtThisGame
-    );
+    if(!debugMode){
+      addGameRecord(
+        state.score, 
+        elapsed, 
+        state.difficultyNames[state.difficultyLevel],
+        state.shinyCaughtThisGame
+      );
+    }
     
     let statsHTML = `최종 점수: <strong>${state.score}</strong><br>생존 시간: <strong>${elapsed}초</strong><br>발견한 독두껍: <strong>${discoveredCount}/16</strong><br>최종 난이도: <strong>${state.difficultyNames[state.difficultyLevel]}</strong>`;
     
     if(state.shinyCaughtThisGame > 0){
-      statsHTML += `<br><span style="color:#FFD700">✨ 이로치독 ${state.shinyCaughtThisGame}마리 획득!</span>`;
+      statsHTML += `<br><span style="color:#FFD700">✨ 이로치독두껍 ${state.shinyCaughtThisGame}마리 획득!</span>`;
     }
     
     document.getElementById('final-stats').innerHTML = statsHTML;
     
-    if(state.score > (SAVE.highScore||0)){ 
+    if(!debugMode && state.score > (SAVE.highScore||0)){ 
       SAVE.highScore = state.score; 
       document.getElementById('highscore-label').textContent = `최고 점수: ${SAVE.highScore}`; 
     }
     
-    saveDebounced(); 
+    if(!debugMode) saveDebounced(); 
     document.getElementById('game-over').classList.add('active');
   }
   
-  // 게임 시작
   function startGame(){ 
     stopDeathSound();
     
@@ -1937,6 +1964,9 @@
     state.lastMissedFrogType=null;
     updateUI();
     
+    // 게임 브금 재생
+    playBGM(bgmGame);
+    
     document.getElementById('main-menu').style.display='none'; 
     document.getElementById('game-over').classList.remove('active'); 
     document.getElementById('boss-hp-container').classList.remove('active'); 
@@ -1947,18 +1977,23 @@
     clearInterval(gameTimeInterval);
     
     spawnInterval = setInterval(spawnFrog, state.spawnDelay); 
-    difficultyInterval = setInterval(increaseDifficulty, 2500); 
+    difficultyInterval = setInterval(increaseDifficulty, 2000); // 더 자주 난이도 증가
     gameTimeInterval = setInterval(updateGameTime, 1000);
   }
   
-  // 일시정지 토글
   function togglePause(){ 
     if(!state.active) return; 
     state.paused = !state.paused; 
-    document.getElementById('pause-screen').classList.toggle('active', state.paused) 
+    document.getElementById('pause-screen').classList.toggle('active', state.paused);
+    
+    // 일시정지 시 BGM도 일시정지
+    if(state.paused){
+      if(currentBGM && !currentBGM.paused) currentBGM.pause();
+    } else {
+      if(currentBGM && currentBGM.paused) currentBGM.play().catch(()=>{});
+    }
   }
   
-  // 메인 메뉴로
   function showMainMenu(){ 
     stopDeathSound();
     
@@ -1978,9 +2013,11 @@
     document.getElementById('game-over').classList.remove('active'); 
     document.getElementById('collection-modal').classList.remove('active'); 
     document.getElementById('pause-screen').classList.remove('active'); 
+    
+    // 메뉴 브금 재생
+    playBGM(bgmMenu);
   }
 
-  // 도감 업데이트
   function updateCollection(filter='all'){
     const grid=document.getElementById('collection-grid'); 
     grid.innerHTML='';
@@ -2035,7 +2072,7 @@
       const st = SAVE.stats[key] || {caught:0,bestCombo:0,bestGain:0};
       
       if(key === 'shiny'){
-        s.textContent = disc? `이로치독 획득 횟수: ${SAVE.totals.shinyCaught}회` : '';
+        s.textContent = disc? `이로치독두껍 획득 횟수: ${SAVE.totals.shinyCaught}회` : '';
       } else {
         s.textContent = disc? `점수 ${data.points} | 수명 ${(data.lifespan/1000).toFixed(1)}초 | 획득 ${st.caught}회 | 최고콤보 ${st.bestCombo}` : '';
       }
@@ -2049,7 +2086,6 @@
     }
   }
   
-  // 디버그 모드 초기화
   function initDebugMode(){
     if(!debugMode) return;
     
@@ -2088,15 +2124,18 @@
       state.frogs.clear();
       playUIClick();
     });
+    
+    document.getElementById('spawn-boss-debug').addEventListener('click', () => {
+      spawnBoss();
+      playUIClick();
+    });
   }
 
-  // 이벤트 리스너 - UI 클릭 사운드
   const buttons = document.querySelectorAll('.menu-btn, .pause-btn, .game-over-btn, .close-btn, .chip');
   buttons.forEach(btn => {
     btn.addEventListener('click', playUIClick);
   });
 
-  // 메인 메뉴 버튼들
   document.getElementById('start-btn').addEventListener('click', startGame);
   document.getElementById('collection-menu-btn').addEventListener('click', ()=>{ 
     updateCollection(); 
@@ -2109,7 +2148,6 @@
     document.getElementById('settings-modal').classList.add('active') 
   });
 
-  // 도감 관련
   document.getElementById('close-collection').addEventListener('click', ()=> 
     document.getElementById('collection-modal').classList.remove('active')
   );
@@ -2122,7 +2160,6 @@
     })
   );
 
-  // 일시정지 관련
   document.getElementById('pause-btn').addEventListener('click', togglePause);
   document.getElementById('resume-btn').addEventListener('click', togglePause);
   document.getElementById('pause-collection-btn').addEventListener('click', ()=>{ 
@@ -2134,15 +2171,27 @@
     document.getElementById('settings-modal').classList.add('active') 
   });
 
-  // 게임 방법
   document.getElementById('howto-close').addEventListener('click', ()=> 
     document.getElementById('howto-modal').classList.remove('active')
   );
   
-  // 설정
   document.getElementById('settings-close').addEventListener('click', ()=> 
     document.getElementById('settings-modal').classList.remove('active')
   );
+
+  document.getElementById('bgm-toggle').addEventListener('change', (e)=>{ 
+    SAVE.settings.bgm = e.target.checked; 
+    applyBGMSettings(); 
+    saveDebounced() 
+  });
+  
+  document.getElementById('bgm-volume').addEventListener('input', (e)=>{ 
+    const v=parseFloat(e.target.value); 
+    SAVE.settings.bgmVol=v; 
+    document.getElementById('bgm-vol-label').textContent = `${Math.round(v*100)}%`; 
+    applyBGMSettings(); 
+    saveDebounced() 
+  });
 
   document.getElementById('sfx-toggle').addEventListener('change', (e)=>{ 
     SAVE.settings.sfx = e.target.checked; 
@@ -2210,14 +2259,13 @@
         totals:{hits:0,misses:0,bossesDefeated:0,shinyCaught:0}, 
         stats:{}, 
         gameHistory:[],
-        settings:{sfx:true,sfxVol:0.7,vibration:true}
+        settings:{bgm:true,bgmVol:0.5,sfx:true,sfxVol:0.7,vibration:true}
       }; 
       loadSave(); 
       alert('초기화 완료') 
     } 
   });
 
-  // 게임오버 버튼들
   document.getElementById('restart-btn').addEventListener('click', ()=>{
     document.getElementById('game-over').classList.remove('active');
     startGame();
@@ -2236,23 +2284,20 @@
     document.getElementById('score-log-modal').classList.remove('active')
   );
 
-  // 오디오 언락
   document.body.addEventListener('pointerdown', unlockAudioOnce, {passive:true});
   document.body.addEventListener('touchstart', ()=>{}, {passive:true});
   
-  // 모바일 힌트
   if(isMobile){ 
     const hint=document.getElementById('touch-hint'); 
     setTimeout(()=>hint.classList.add('show'), 300); 
     setTimeout(()=>hint.classList.remove('show'), 3000); 
   }
 
-  // 우클릭 방지
   window.addEventListener('contextmenu', e=>e.preventDefault());
 
-  // 초기화
   loadSave(); 
-  applyAudioSettings(); 
+  applyAudioSettings();
+  applyBGMSettings();
   showMainMenu();
   initDebugMode();
   </script>
