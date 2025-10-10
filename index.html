@@ -40,6 +40,21 @@
       font-family: 'Paperozi', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
       cursor: crosshair;
       touch-action: manipulation;
+      position: relative;
+    }
+    
+    body.debug-mode::before{
+      content: '디 버 그';
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 28vw;
+      font-weight: 900;
+      color: rgba(128,128,128,0.08);
+      z-index: 1;
+      pointer-events: none;
+      white-space: nowrap;
     }
     
     #ui{
@@ -108,28 +123,6 @@
       backdrop-filter: blur(8px);
     }
 
-    #pause-btn{
-      position:fixed; 
-      bottom:16px; 
-      right:16px; 
-      padding:.65rem 1rem; 
-      border-radius:.75rem; 
-      font-size:clamp(14px,2.6vw,18px); 
-      background:var(--glass); 
-      border:2px solid rgba(255,255,255,.25); 
-      color:#fff; 
-      z-index:1200; 
-      cursor:pointer; 
-      transition:.3s; 
-      box-shadow:var(--shadow);
-      pointer-events:auto;
-    }
-    
-    #pause-btn:hover{
-      background:var(--glass-2); 
-      transform: translateY(-3px) scale(1.05);
-    }
-
     .screen{
       position:fixed; 
       inset:0; 
@@ -171,10 +164,127 @@
       }
     }
 
+    #loading-screen{
+      position: fixed;
+      inset: 0;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+    }
+    
+    #loading-screen h1{
+      font-size: clamp(32px, 8vw, 64px);
+      margin-bottom: 20px;
+    }
+    
+    #loading-text{
+      font-size: clamp(18px, 4vw, 28px);
+      color: #888;
+      margin-bottom: 10px;
+    }
+    
+    #loading-progress{
+      width: min(500px, 80vw);
+      height: 8px;
+      background: #222;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+    
+    #loading-bar{
+      height: 100%;
+      background: linear-gradient(90deg, #4CAF50, #8BC34A);
+      width: 0%;
+      transition: width 0.3s;
+    }
+    
+    #logo-screen{
+      position: fixed;
+      inset: 0;
+      background: #000;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 99998;
+    }
+    
+    #logo-container{
+      width: min(500px, 90vw);
+      height: min(500px, 90vh);
+      position: relative;
+      overflow: hidden;
+      mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+    }
+    
+    #logo-text{
+      position: absolute;
+      width: 100%;
+      text-align: center;
+      font-size: clamp(48px, 12vw, 96px);
+      font-weight: 900;
+      color: #fff;
+      white-space: nowrap;
+      animation: logoReveal 4s ease-in-out forwards;
+    }
+    
+    @keyframes logoReveal{
+      0% {
+        top: -100px;
+        transform: rotate(-15deg);
+        opacity: 0;
+      }
+      25% {
+        top: 50%;
+        transform: translateY(-50%) rotate(0deg);
+        opacity: 1;
+      }
+      75% {
+        top: 50%;
+        transform: translateY(-50%) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        top: calc(100% + 100px);
+        transform: translateY(-50%) rotate(15deg);
+        opacity: 0;
+      }
+    }
+
+    #resolution-warning{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.98);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100000;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    #resolution-warning h1{
+      font-size: clamp(28px, 6vw, 48px);
+      color: #ff3333;
+      margin-bottom: 20px;
+    }
+    
+    #resolution-warning p{
+      font-size: clamp(16px, 3vw, 24px);
+      color: #ccc;
+      max-width: 600px;
+      line-height: 1.6;
+    }
+
     #main-menu{
       position:fixed; 
       inset:0; 
-      display:flex; 
+      display:none;
       flex-direction:column; 
       justify-content:center; 
       align-items:center; 
@@ -348,9 +458,13 @@
       overflow:hidden; 
       border:2px solid #333; 
       flex:0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0a0a0a;
     }
     
-    .thumb video{
+    .thumb video, .thumb img{
       width:100%; 
       height:100%; 
       object-fit:cover;
@@ -413,19 +527,116 @@
       background: linear-gradient(90deg, #ff00ff, #ff66ff); 
       transition:width .25s;
     }
+    
+    #boss-warning{
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      overflow: hidden;
+      display: none;
+      z-index: 19500;
+      background: #000;
+    }
+    
+    #boss-warning.active{
+      display: block;
+    }
+    
+    .warning-track{
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      display: flex;
+      animation: warningScroll 3s linear infinite;
+      white-space: nowrap;
+    }
+    
+    @keyframes warningScroll{
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+    
+    .warning-item{
+      display: inline-flex;
+      align-items: center;
+      height: 100%;
+      padding: 0 40px;
+      margin-right: 0;
+      background: repeating-linear-gradient(
+        -45deg,
+        #FFD700,
+        #FFD700 20px,
+        #000 20px,
+        #000 40px
+      );
+      font-size: clamp(32px, 7vw, 52px);
+      font-weight: 900;
+      color: #fff;
+      text-shadow: 0 0 15px #000, 0 0 5px #000;
+    }
+    
+    #boss-vignette{
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 19000;
+      display: none;
+      background: radial-gradient(ellipse at center, transparent 20%, rgba(128,0,128,0.4) 100%);
+      animation: vignettePulse 2s ease-in-out infinite;
+    }
+    
+    #boss-vignette.active{
+      display: block;
+    }
+    
+    @keyframes vignettePulse{
+      0%, 100% {
+        background: radial-gradient(ellipse at center, transparent 20%, rgba(128,0,128,0.3) 100%);
+      }
+      50% {
+        background: radial-gradient(ellipse at center, transparent 20%, rgba(128,0,128,0.5) 100%);
+      }
+    }
+    
+    #nuclear-vignette{
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 19000;
+      display: none;
+      background: radial-gradient(ellipse at center, transparent 20%, rgba(200,255,0,0.6) 100%);
+      animation: nuclearFade 1s ease-out forwards;
+    }
+    
+    #nuclear-vignette.active{
+      display: block;
+    }
+    
+    @keyframes nuclearFade{
+      0% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+      }
+    }
 
     .frog{
       position:absolute; 
       cursor:pointer; 
       transition: filter .1s; 
       will-change: transform;
+      z-index: 500;
     }
     
     .frog:hover{
       filter: brightness(1.35);
     }
     
-    .frog video{
+    .frog video, .frog img{
       width:100%; 
       height:100%; 
       object-fit:cover; 
@@ -434,16 +645,54 @@
       box-shadow:0 4px 20px rgba(0,0,0,.7);
     }
     
-    .frog.boss video{
+    .frog.boss video, .frog.boss img{
       border:5px solid #ff00ff; 
       animation: bossPulse 1s infinite;
+      user-select: none;
+      -webkit-user-select: none;
+      pointer-events: none;
     }
     
-    .frog.shiny video{
+    .frog.boss{
+      z-index: 50 !important;
+    }
+    
+    .frog.boss.phase2 video, .frog.boss.phase2 img{
+      border:5px solid #000;
+      box-shadow: 0 0 50px #000, 0 0 100px rgba(0,0,0,0.8);
+      animation: bossPulse2 0.5s infinite;
+    }
+    
+    @keyframes bossPulse2{
+      0%,100%{transform:scale(1); filter:brightness(0.7)} 
+      50%{transform:scale(1.08); filter:brightness(1)}
+    }
+    
+    .frog.shiny video, .frog.shiny img{
       filter: brightness(1.6) saturate(1.8);
       border:4px solid #FFD700;
       box-shadow:0 0 35px #FFD700, 0 0 60px rgba(255,215,0,0.6);
       animation: shinyPulse 0.8s infinite;
+    }
+    
+    .trail{
+      position: absolute;
+      pointer-events: none;
+      border-radius: 50%;
+      opacity: 0;
+      animation: trailFade 0.8s ease-out forwards;
+      z-index: 50;
+    }
+    
+    @keyframes trailFade{
+      0% {
+        opacity: 0.6;
+        transform: scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(0.3);
+      }
     }
     
     .shiny-particle{
@@ -563,7 +812,7 @@
     
     #damage-flash.active{display:block}
     
-    #damage-flash video{
+    #damage-flash video, #damage-flash img{
       width:100%;
       height:100%;
       object-fit:cover;
@@ -807,6 +1056,13 @@
       display: block;
     }
     
+    #debug-panel.hidden{
+      background: transparent;
+      border: none;
+      padding: 8px 16px;
+      max-height: auto;
+    }
+    
     #debug-panel h3{
       color: #0f0;
       margin-bottom: 12px;
@@ -868,13 +1124,88 @@
       border-color: #666;
       transform: translateY(-2px);
     }
+    
+    .boss-projectile{
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle, #ff00ff, #ff66ff);
+      border-radius: 50%;
+      box-shadow: 0 0 30px #ff00ff, 0 0 60px rgba(255,0,255,0.8);
+      border: 4px solid #fff;
+      z-index: 1500;
+      cursor: pointer;
+      animation: projectilePulse 0.5s infinite;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    
+    @keyframes projectilePulse{
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
 
     @supports(padding:max(0px)){
       body{padding-bottom: max(env(safe-area-inset-bottom), 0px)}
     }
+    
+    @media (max-width: 768px) {
+      #ui {
+        top: 20px;
+        padding: 0 20px;
+      }
+      
+      #score {
+        font-size: clamp(28px, 6vw, 40px);
+        padding: .4rem 1rem;
+      }
+      
+      #lives {
+        padding: .4rem .8rem;
+      }
+      
+      .heart {
+        font-size: clamp(26px, 5vw, 32px);
+      }
+      
+      #difficulty-display {
+        top: 20px;
+        font-size: clamp(18px, 4vw, 22px);
+        padding: .4rem 1rem;
+      }
+      
+      .menu-btn {
+        font-size: clamp(20px, 5vw, 26px);
+        padding: 18px 32px;
+      }
+      
+      .chip {
+        font-size: 16px;
+        padding: 8px 14px;
+      }
+    }
   </style>
 </head>
 <body>
+  <div id="loading-screen">
+    <h1>조랄두껍</h1>
+    <div id="loading-text">로딩중...</div>
+    <div id="loading-progress">
+      <div id="loading-bar"></div>
+    </div>
+  </div>
+  
+  <div id="logo-screen">
+    <div id="logo-container">
+      <div id="logo-text">OCGK123</div>
+    </div>
+  </div>
+
+  <div id="resolution-warning">
+    <h1>⚠️ 해상도 부족</h1>
+    <p>이 게임을 플레이하려면 최소 1024×768 이상의 해상도가 필요합니다.<br>브라우저 창을 더 크게 만들거나 더 큰 화면에서 플레이해주세요.</p>
+  </div>
+
   <div id="ui">
     <div id="score">0</div>
     <div id="lives">
@@ -890,11 +1221,24 @@
     <div id="boss-name">🌟 독두껍 🌟</div>
     <div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
   </div>
-  <div id="damage-flash">
-    <video id="damage-video" muted playsinline></video>
+  <div id="boss-warning">
+    <div class="warning-track">
+      <div class="warning-item">⚠️ WARNING ⚠️</div>
+      <div class="warning-item">⚠️ WARNING ⚠️</div>
+      <div class="warning-item">⚠️ WARNING ⚠️</div>
+      <div class="warning-item">⚠️ WARNING ⚠️</div>
+      <div class="warning-item">⚠️ WARNING ⚠️</div>
+      <div class="warning-item">⚠️ WARNING ⚠️</div>
+      <div class="warning-item">⚠️ WARNING ⚠️</div>
+      <div class="warning-item">⚠️ WARNING ⚠️</div>
+      <div class="warning-item">⚠️ WARNING ⚠️</div>
+      <div class="warning-item">⚠️ WARNING ⚠️</div>
+    </div>
   </div>
+  <div id="boss-vignette"></div>
+  <div id="nuclear-vignette"></div>
+  <div id="damage-flash"></div>
   <div id="combo-display">콤보 x<span id="combo-count">0</span></div>
-  <button id="pause-btn" aria-label="일시정지">일시정지</button>
   <div id="touch-hint">TIP: 독두껍들을 눌러서 처치하세요!</div>
 
   <div id="pause-screen" class="screen">
@@ -941,14 +1285,14 @@
   <div id="howto-modal" class="modal">
     <div class="panel">
       <h2>게임 방법</h2>
-      <ol style="margin:12px 0; padding-left:20px; line-height:1.8">
+      <ol style="margin:12px 0; padding-left:20px; line-height:1.8" id="howto-list">
         <li>화면에 나타나는 <strong>독두껍</strong>들을 클릭/터치하여 잡기
         <li>두껍이 중앙에 도착하기 전에 잡아야 함
         <li>빠르게 연속으로 잡으면 <strong>콤보</strong>가 올라가고 점수 보너스
         <li>놓치면 <strong>하트 1개</strong>가 사라짐. 하트 0개면 게임오버
         <li>일부 두껍은 <strong>순간이동/돌진/최면</strong> 등 특수 행동을 함
-        <li>보스가 나오면 <strong>HP를 0</strong>으로 만들어야한다!
         <li><strong style="color:#FFD700">✨ 이로치독두껍</strong>: 5% 확률로 점수 2.5배
+        <li><strong style="color:#FFD700">🌟 핵독껍</strong>: 2대 맞아야 죽음. 놓치면 2데미지!
       </ol>
       <p style="margin-top:10px; color:#bbb">모든 진행도와 도감은 자동 저장됨. 설정에서 초기화 가능</p>
       <div class="menu-row" style="margin-top:10px">
@@ -981,6 +1325,7 @@
         <span class="label">데이터</span>
         <button class="pause-btn" id="export-btn">내보내기</button>
         <button class="pause-btn" id="import-btn">가져오기</button>
+        <button class="pause-btn" id="clear-cache-btn" style="background:#ffe4b5">캐시 삭제</button>
         <button class="pause-btn" id="reset-btn" style="background:#ffdad7">초기화</button>
       </div>
       <div class="menu-row" style="margin-top:8px">
@@ -1011,15 +1356,107 @@
   <div id="debug-panel">
     <h3>🐸 DEBUG MODE</h3>
     <div class="debug-controls">
+      <button class="debug-btn" id="toggle-debug-menu">디버그 메뉴: 보이기</button>
       <button class="debug-btn" id="toggle-random-spawn">랜덤 스폰: ON</button>
+      <button class="debug-btn" id="toggle-godmode">무적 모드: OFF</button>
       <button class="debug-btn" id="clear-all-frogs">모두 제거</button>
       <button class="debug-btn" id="spawn-boss-debug">보스 소환</button>
+      <button class="debug-btn" id="add-score-debug">점수 +1000</button>
     </div>
-    <h4 style="color:#888; margin-top:8px; margin-bottom:8px; font-size:14px;">두껍 수동 스폰:</h4>
-    <div class="frog-spawner" id="frog-spawner"></div>
+    <div id="debug-spawner-section">
+      <h4 style="color:#888; margin-top:8px; margin-bottom:8px; font-size:14px;">두껍 수동 스폰:</h4>
+      <div class="frog-spawner" id="frog-spawner"></div>
+    </div>
   </div>
 
   <script>
+  // 해상도 체크를 최우선으로
+  function checkResolution(){
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const resWarning = document.getElementById('resolution-warning');
+    
+    if(w < 1024 || h < 768){
+      resWarning.style.display = 'flex';
+      return false;
+    } else {
+      resWarning.style.display = 'none';
+      return true;
+    }
+  }
+  
+  window.addEventListener('resize', checkResolution);
+  
+  if(!checkResolution()){
+    // 해상도 부족 시 로딩 화면 숨기기
+    document.getElementById('loading-screen').style.display = 'none';
+  }
+
+  // IndexedDB 캐시 시스템
+  const DB_NAME = 'joraldukkup_cache';
+  const DB_VERSION = 1;
+  const STORE_NAME = 'assets';
+  
+  let db = null;
+  
+  async function initDB(){
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        db = request.result;
+        resolve(db);
+      };
+      
+      request.onupgradeneeded = (e) => {
+        const database = e.target.result;
+        if(!database.objectStoreNames.contains(STORE_NAME)){
+          database.createObjectStore(STORE_NAME, { keyPath: 'url' });
+        }
+      };
+    });
+  }
+  
+  async function getCachedAsset(url){
+    if(!db) await initDB();
+    
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get(url);
+      
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+  
+  async function cacheAsset(url, data){
+    if(!db) await initDB();
+    
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.put({ url, data, timestamp: Date.now() });
+      
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+  
+  async function clearCache(){
+    if(!db) await initDB();
+    
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction([STORE_NAME], 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.clear();
+      
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
   const STORAGE_KEY = 'joraldukkup.save.v2';
   const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
   
@@ -1057,7 +1494,7 @@
   }
   
   function saveNow(){ 
-    if(debugMode) return; // 디버그 모드에서는 저장 안함
+    if(debugMode) return;
     try{ 
       localStorage.setItem(STORAGE_KEY, JSON.stringify(SAVE)); 
     }catch(e){ 
@@ -1075,7 +1512,7 @@
   const saveDebounced = debounce(saveNow, 250);
 
   function addGameRecord(score, time, difficulty, shinyCaught){
-    if(debugMode) return; // 디버그 모드에서는 기록 안함
+    if(debugMode) return;
     const record = {
       score: score,
       time: time,
@@ -1109,7 +1546,7 @@
     document.getElementById('score-log-modal').classList.add('active');
   }
 
-  // 배경음악 시스템
+  // 배경음악
   const bgmMenu = new Audio('https://github.com/OCGK123/Poision-Toad/raw/refs/heads/main/menu.mp3');
   const bgmGame = new Audio('https://github.com/OCGK123/Poision-Toad/raw/refs/heads/main/infight.mp3');
   const bgmBoss = new Audio('https://github.com/OCGK123/Poision-Toad/raw/refs/heads/main/bossfight.mp3');
@@ -1124,7 +1561,6 @@
     if(!SAVE.settings.bgm) return;
     if(currentBGM === bgm && !bgm.paused) return;
     
-    // 모든 BGM 정지
     [bgmMenu, bgmGame, bgmBoss].forEach(b => {
       b.pause();
       b.currentTime = 0;
@@ -1154,7 +1590,7 @@
     }
   }
 
-  // 효과음 시스템
+  // 효과음
   const uiClickSound = new Audio('https://www.myinstants.com/media/sounds/voice_sans.mp3');
   const hitSound = new Audio('https://github.com/OCGK123/Poision-Toad/raw/refs/heads/main/Toad.mp3');
   const spawnSound = new Audio('https://www.myinstants.com/media/sounds/whoosh-wind.mp3');
@@ -1267,9 +1703,7 @@
     }catch{}
   }
   
-  function applyAudioSettings(){
-    // 효과음은 재생 시 볼륨 적용
-  }
+  function applyAudioSettings(){}
   
   function unlockAudioOnce(){ 
     if(audioUnlocked) return;
@@ -1296,47 +1730,65 @@
     paused: false, 
     startTime: 0, 
     lastHitTime: 0,
-    spawnDelay: 800, 
-    minSpawnDelay: 200, 
+    spawnDelay: 1200, 
+    minSpawnDelay: 300, 
     frogs: new Set(), 
     discovered: new Set(), 
     bossActive:false,
     bossHP:0, 
     maxBossHP:0, 
-    bossFrog:null, 
+    bossFrog:null,
+    bossPhase: 1,
     gameTime:0, 
     difficultyLevel:0,
     shinyCaughtThisGame: 0,
     lastMissedFrogType: null,
-    difficultyNames: ['초급','중급','고급','고수','지옥','신','악마','전설','신화','초월','궁극','절대자','무한','영원','천상','우주']
+    difficultyNames: ['초급','중급','고급','고수','지옥','신','악마','전설','신화','초월','궁극','절대자','무한','영원','천상','독두껍'],
+    bossProjectiles: new Set(),
+    bossLastAttack: 0,
+    bossAttackCooldown: 0,
+    nuclearFrogHP: new Map(),
+    windowFocused: true
   };
   
   let debugMode = false;
   let debugRandomSpawn = true;
+  let debugGodMode = false;
+  let debugMenuVisible = true;
   
   if(window.location.hash === '#debug'){
     debugMode = true;
+    document.body.classList.add('debug-mode');
     document.getElementById('debug-panel').classList.add('active');
   }
 
   // 두껍 데이터
   const frogTypes = {
-    chingu:{ name:'친구껍', video:'https://media.tenor.com/qSQ3mTn58vgAAAPo/frog-eat.mp4', lifespan:2500, points:15, size:80, maxSize:280, spawnChance:0.30, color:'#4CAF50', description:'배고픈 친구. 먹이를 찾고있다.', behavior:'normal'},
-    shinnan:{ name:'신난두껍', video:'https://media.tenor.com/tLf4YbvzJ6sAAAPo/yee-toad.mp4', lifespan:2400, points:18, size:75, maxSize:270, spawnChance:0.25, color:'#FFEB3B', description:'항상 신남. 기분 업!', behavior:'excited'},
-    dance:{ name:'댄스껍', video:'https://media.tenor.com/XxZQsifhe0AAAAPo/frog-toad.mp4', lifespan:2800, points:20, size:75, maxSize:300, spawnChance:0.20, color:'#00BCD4', description:'리듬 타는 흥많은 두껍', behavior:'dance'},
-    eogul:{ name:'억울껍', video:'https://media.tenor.com/Dxp0w3YjOjkAAAPo/frog-sitting.mp4', lifespan:2300, points:22, size:75, maxSize:280, spawnChance:0.15, color:'#607D8B', description:'억울한 표정… 불쌍', behavior:'sad'},
-    eungdi:{ name:'응디껍', video:'https://media.tenor.com/7b3eYQD9moQAAAPo/frog-toad-flex-twerk.mp4', lifespan:2600, points:25, size:70, maxSize:290, spawnChance:0.12, color:'#FF5722', description:'자신감 넘치는 근육 두껍', behavior:'flex'},
-    flower:{ name:'꽃두껍', video:'https://media.tenor.com/40xvCEgMIj4AAAPo/twerg45-toad.mp4', lifespan:2900, points:28, size:75, maxSize:295, spawnChance:0.10, color:'#E1BEE7', description:'꽃처럼 아름다움', behavior:'flower'},
-    ddungbo:{ name:'뚱보껍', video:'https://media.tenor.com/uvuwfwB8VrQAAAPo/frog-frogs.mp4', lifespan:3200, points:30, size:90, maxSize:400, spawnChance:0.08, color:'#8BC34A', description:'느리지만 거대. 맞추기 쉬움', behavior:'slow'},
-    sinsa:{ name:'신사껍', video:'https://media.tenor.com/ZYmQDoqtUN4AAAPo/colonel-toad.mp4', lifespan:2700, points:35, size:78, maxSize:310, spawnChance:0.07, color:'#795548', description:'품위있는 신사. 느릿한 이동', behavior:'gentleman'},
-    rapper:{ name:'레퍼껍', video:'https://media.tenor.com/Kx3RklAD3-MAAAPo/toad-frog.mp4', lifespan:1600, points:38, size:66, maxSize:210, spawnChance:0.06, color:'#9575CD', description:'비트를 탄다. 예측 난이도↑', behavior:'rap'},
-    ggamnol:{ name:'깜놀껍', video:'https://media.tenor.com/_wfKmsxm0HgAAAPo/souichi-tsujii-sayuri.mp4', lifespan:1200, points:40, size:70, maxSize:200, spawnChance:0.05, color:'#9C27B0', description:'순간이동하며 깜짝 놀라게!', behavior:'teleport', teleportChance:0.3},
-    dwae:{ name:'돼공껍', video:'https://media.tenor.com/4uQqOK2AQrwAAAPo/10th-kingdom-frogs.mp4', lifespan:1800, points:45, size:68, maxSize:220, spawnChance:0.04, color:'#E91E63', description:'급격 성장 변이', behavior:'growFast'},
-    sibi:{ name:'시비껍', video:'https://media.tenor.com/TO7MRzBkquMAAAPo/rawr-thumb.mp4', lifespan:1500, points:50, size:62, maxSize:190, spawnChance:0.03, color:'#FF1744', description:'공격적. 속도가 빠름', behavior:'aggressive'},
-    rush:{ name:'돌격껍', video:'https://media.tenor.com/3ymk3wPLjUwAAAPo/toad.mp4', lifespan:1100, points:60, size:60, maxSize:180, spawnChance:0.02, color:'#F44336', description:'초고속 돌진!', behavior:'rush'},
-    nuclear:{ name:'핵독껍', video:'https://media.tenor.com/GEjoMjVhYuMAAAPo/futurama-hypnotoad.mp4', lifespan:2000, points:100, size:65, maxSize:250, spawnChance:0.01, color:'#FFD700', description:'최면 능력 보유', behavior:'hypnotize'},
-    shiny:{ name:'이로치독두껍', video:'https://media.tenor.com/qSQ3mTn58vgAAAPo/frog-eat.mp4', lifespan:2500, points:150, size:80, maxSize:280, spawnChance:0, color:'#FFD700', description:'전설의 반짝이는 두껍. 5% 확률로 등장!', behavior:'shiny'},
-    boss:{ name:'독두껍', video:'https://github.com/OCGK123/Poision-Toad/blob/main/IMG_20250919_024150_984.jpg?raw=true', lifespan:999999, points:500, size:100, maxSize:450, spawnChance:0.002, color:'#ff00ff', description:'전설의 끝판왕', behavior:'boss'}
+    chingu:{ name:'친구껍', media:'https://media.tenor.com/qSQ3mTn58vgAAAPo/frog-eat.mp4', type:'video', lifespan:2500, points:15, size:110, maxSize:280, spawnChance:0.30, color:'#4CAF50', rarity:'common', description:'배고픈 친구. 먹이를 찾고있다.', behavior:'normal'},
+    shinnan:{ name:'신난두껍', media:'https://media.tenor.com/tLf4YbvzJ6sAAAPo/yee-toad.mp4', type:'video', lifespan:2400, points:18, size:105, maxSize:270, spawnChance:0.25, color:'#8BC34A', rarity:'common', description:'항상 신남. 기분 업!', behavior:'excited'},
+    dance:{ name:'댄스껍', media:'https://media.tenor.com/XxZQsifhe0AAAAPo/frog-toad.mp4', type:'video', lifespan:2800, points:20, size:105, maxSize:300, spawnChance:0.20, color:'#00BCD4', rarity:'uncommon', description:'리듬 타는 흥많은 두껍', behavior:'dance'},
+    eogul:{ name:'억울껍', media:'https://media.tenor.com/Dxp0w3YjOjkAAAPo/frog-sitting.mp4', type:'video', lifespan:2300, points:22, size:105, maxSize:280, spawnChance:0.15, color:'#607D8B', rarity:'uncommon', description:'억울한 표정… 불쌍', behavior:'sad'},
+    eungdi:{ name:'응디껍', media:'https://media.tenor.com/7b3eYQD9moQAAAPo/frog-toad-flex-twerk.mp4', type:'video', lifespan:2600, points:25, size:100, maxSize:290, spawnChance:0.12, color:'#2196F3', rarity:'uncommon', description:'자신감 넘치는 근육 두껍', behavior:'flex'},
+    flower:{ name:'꽃두껍', media:'https://media.tenor.com/40xvCEgMIj4AAAPo/twerg45-toad.mp4', type:'video', lifespan:2900, points:28, size:105, maxSize:295, spawnChance:0.10, color:'#9C27B0', rarity:'rare', description:'꽃처럼 아름다움', behavior:'flower'},
+    ddungbo:{ name:'뚱보껍', media:'https://media.tenor.com/uvuwfwB8VrQAAAPo/frog-frogs.mp4', type:'video', lifespan:3200, points:30, size:120, maxSize:400, spawnChance:0.08, color:'#8BC34A', rarity:'rare', description:'느리지만 거대. 맞추기 쉬움', behavior:'slow'},
+    sinsa:{ name:'신사껍', media:'https://media.tenor.com/ZYmQDoqtUN4AAAPo/colonel-toad.mp4', type:'video', lifespan:2700, points:35, size:108, maxSize:310, spawnChance:0.07, color:'#795548', rarity:'rare', description:'품위있는 신사. 느릿한 이동', behavior:'gentleman'},
+    rapper:{ name:'레퍼껍', media:'https://media.tenor.com/Kx3RklAD3-MAAAPo/toad-frog.mp4', type:'video', lifespan:1600, points:38, size:96, maxSize:210, spawnChance:0.06, color:'#9C27B0', rarity:'rare', description:'비트를 탄다. 예측 난이도↑', behavior:'rap'},
+    ggamnol:{ name:'깜놀껍', media:'https://media.tenor.com/_wfKmsxm0HgAAAPo/souichi-tsujii-sayuri.mp4', type:'video', lifespan:1200, points:40, size:100, maxSize:200, spawnChance:0.05, color:'#9C27B0', rarity:'rare', description:'순간이동하며 깜짝 놀라게!', behavior:'teleport', teleportChance:0.3},
+    dwae:{ name:'돼공껍', media:'https://media.tenor.com/4uQqOK2AQrwAAAPo/10th-kingdom-frogs.mp4', type:'video', lifespan:1800, points:45, size:98, maxSize:220, spawnChance:0.04, color:'#E91E63', rarity:'epic', description:'급격 성장 변이', behavior:'growFast'},
+    sibi:{ name:'시비껍', media:'https://media.tenor.com/TO7MRzBkquMAAAPo/rawr-thumb.mp4', type:'video', lifespan:1500, points:50, size:92, maxSize:190, spawnChance:0.03, color:'#FF1744', rarity:'epic', description:'공격적. 속도가 빠름', behavior:'aggressive'},
+    rush:{ name:'돌격껍', media:'https://media.tenor.com/3ymk3wPLjUwAAAPo/toad.mp4', type:'video', lifespan:1100, points:60, size:90, maxSize:180, spawnChance:0.02, color:'#F44336', rarity:'epic', description:'초고속 돌진!', behavior:'rush'},
+    nuclear:{ name:'핵독껍', media:'https://media.tenor.com/GEjoMjVhYuMAAAPo/futurama-hypnotoad.mp4', type:'video', lifespan:2000, points:100, size:95, maxSize:250, spawnChance:0.01, color:'#FFD700', rarity:'legendary', description:'최면 능력 보유', behavior:'hypnotize'},
+    shiny:{ name:'이로치독두껍', media:'https://media.tenor.com/qSQ3mTn58vgAAAPo/frog-eat.mp4', type:'video', lifespan:2500, points:150, size:110, maxSize:280, spawnChance:0, color:'#FFD700', rarity:'legendary', description:'전설의 반짝이는 두껍. 5% 확률로 등장!', behavior:'shiny'},
+    boss:{ name:'독두껍', media:'https://github.com/OCGK123/Poision-Toad/blob/main/IMG_20250919_024150_984.jpg?raw=true', type:'image', lifespan:999999, points:500, size:120, maxSize:450, spawnChance:0.002, color:'#ff00ff', rarity:'legendary', description:'전설의 끝판왕', behavior:'boss'}
+  };
+
+  // 희귀도별 trail 색상
+  const rarityColors = {
+    common: '#4CAF50',
+    uncommon: '#2196F3',
+    rare: '#9C27B0',
+    epic: '#E91E63',
+    legendary: '#FFD700'
   };
 
   let spawnInterval, difficultyInterval, gameTimeInterval;
@@ -1358,7 +1810,19 @@
     if(state.combo>1) comboDisplay.classList.add('active'); 
     else comboDisplay.classList.remove('active');
     
-    document.getElementById('difficulty-display').textContent = `난이도: ${state.difficultyNames[state.difficultyLevel]}`;
+    document.getElementById('difficulty-display').textContent = state.bossActive ? '난이도: BOSS' : `난이도: ${state.difficultyNames[state.difficultyLevel]}`;
+  }
+
+  function createTrail(x, y, size, color){
+    const trail = document.createElement('div');
+    trail.className = 'trail';
+    trail.style.left = (x - size/2) + 'px';
+    trail.style.top = (y - size/2) + 'px';
+    trail.style.width = size + 'px';
+    trail.style.height = size + 'px';
+    trail.style.border = `2px solid ${color}`;
+    document.body.appendChild(trail);
+    setTimeout(() => trail.remove(), 800);
   }
 
   function createShinyParticles(frog, x, y, size){
@@ -1447,16 +1911,26 @@
   
   function damageFlash(frogType){ 
     const flash = document.getElementById('damage-flash');
-    const video = document.getElementById('damage-video');
     
     const frogData = frogTypes[frogType];
     if(!frogData) return;
     
-    video.src = frogData.video;
-    video.load();
-    video.play().catch(()=>{});
+    // 미디어 타입에 따라 처리
+    const mediaEl = frogData.type === 'video' ? document.createElement('video') : document.createElement('img');
     
-    // 5개의 랜덤 위치에 깜빡이는 텍스트 생성
+    if(frogData.type === 'video'){
+      mediaEl.src = frogData.media;
+      mediaEl.muted = true;
+      mediaEl.autoplay = true;
+      mediaEl.playsInline = true;
+    } else {
+      mediaEl.src = frogData.media;
+    }
+    
+    flash.innerHTML = '';
+    flash.appendChild(mediaEl);
+    
+    // 텍스트 5개
     for(let i = 0; i < 5; i++){
       const text = document.createElement('div');
       text.className = 'damage-text';
@@ -1472,9 +1946,8 @@
     
     setTimeout(() => {
       flash.classList.remove('active');
-      video.pause();
-      video.src = '';
-    }, 500);
+      flash.innerHTML = '';
+    }, 300); // 더 짧게 표시
   }
   
   function maybeVibrate(pattern=[12]){ 
@@ -1501,29 +1974,120 @@
     } 
   }
 
+  function createBossProjectile(bossX, bossY){
+    const projectile = document.createElement('div');
+    projectile.className = 'boss-projectile';
+    
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1.2 + Math.random() * 0.8; // 속도를 많이 느리게
+    
+    let x = bossX;
+    let y = bossY;
+    let vx = Math.cos(angle) * speed;
+    let vy = Math.sin(angle) * speed;
+    let destroyed = false;
+    
+    document.body.appendChild(projectile);
+    state.bossProjectiles.add(projectile);
+    
+    function onProjectileClick(ev){
+      if(destroyed) return;
+      destroyed = true;
+      ev.stopPropagation();
+      
+      playHitSound();
+      createBloodParticles(x, y, 15);
+      
+      const bonus = 30;
+      state.score += bonus;
+      updateUI();
+      showScorePopup(x, y, bonus, '#ff00ff');
+      
+      projectile.remove();
+      state.bossProjectiles.delete(projectile);
+      projectile.removeEventListener('click', onProjectileClick);
+    }
+    
+    projectile.addEventListener('click', onProjectileClick);
+    projectile.addEventListener('pointerdown', onProjectileClick);
+    
+    function animate(){
+      if(destroyed || !state.active || state.paused) return;
+      
+      x += vx;
+      y += vy;
+      
+      projectile.style.left = (x - 60) + 'px';
+      projectile.style.top = (y - 60) + 'px';
+      
+      // 화면 밖으로 나가면 플레이어 피격
+      if(x < -150 || x > innerWidth + 150 || y < -150 || y > innerHeight + 150){
+        if(!destroyed && !debugGodMode){
+          destroyed = true;
+          projectile.remove();
+          state.bossProjectiles.delete(projectile);
+          loseLife(false);
+        }
+        return;
+      }
+      
+      requestAnimationFrame(animate);
+    }
+    
+    animate();
+  }
+
+  function spawnMiniFrogs(bossX, bossY, count){
+    // 보스가 일반 두껍 소환
+    for(let i = 0; i < count; i++){
+      setTimeout(() => {
+        const keys = Object.keys(frogTypes).filter(k => k !== 'boss' && k !== 'shiny');
+        const randomKey = keys[Math.floor(Math.random() * keys.length)];
+        
+        // 보스 주변에서 스폰
+        const offsetX = (Math.random() - 0.5) * 200;
+        const offsetY = (Math.random() - 0.5) * 200;
+        
+        spawnFrogManual(randomKey, false, bossX + offsetX, bossY + offsetY);
+      }, i * 200);
+    }
+  }
+
   function spawnBoss(){ 
     if(state.bossActive) return; 
     
-    state.bossActive=true; 
-    state.bossHP = 20 + state.difficultyLevel*8; 
+    state.bossActive=true;
+    state.bossPhase=1;
+    state.bossHP = (30 + state.difficultyLevel*12) * 8; // HP 8배 증가
     state.maxBossHP = state.bossHP;
+    state.bossLastAttack = Date.now();
+    state.bossAttackCooldown = 2000 + Math.random() * 1000;
     
-    // 보스 브금 재생
     playBGM(bgmBoss);
+    
+    // 보스 경고 표시
+    document.getElementById('boss-warning').classList.add('active');
+    document.getElementById('boss-vignette').classList.add('active');
     
     const data=frogTypes.boss; 
     const frog=document.createElement('div'); 
     frog.className='frog boss'; 
     
-    const video=document.createElement('video'); 
-    Object.assign(video,{
-      src:data.video, 
-      autoplay:true, 
-      loop:true, 
-      muted:true, 
-      playsInline:true
-    }); 
-    frog.appendChild(video); 
+    const mediaEl = data.type === 'video' ? document.createElement('video') : document.createElement('img');
+    
+    if(data.type === 'video'){
+      Object.assign(mediaEl, {
+        src: data.media,
+        autoplay: true,
+        loop: true,
+        muted: true,
+        playsInline: true
+      });
+    } else {
+      mediaEl.src = data.media;
+    }
+    
+    frog.appendChild(mediaEl); 
     document.body.appendChild(frog);
     
     playSpawnSound();
@@ -1540,22 +2104,31 @@
     document.getElementById('boss-hp-container').classList.add('active'); 
     updateBossHP();
     
-    let x=innerWidth/2, y=innerHeight/2, size=data.size, destroyed=false, start=Date.now(), ang=Math.random()*Math.PI*2, changeT=Date.now(), atkT=Date.now();
+    let x=innerWidth/2, y=innerHeight/2, size=data.size, destroyed=false, start=Date.now(), ang=Math.random()*Math.PI*2, changeT=Date.now();
     
     (function anim(){ 
       if(destroyed||!state.active||state.paused) return; 
       
       const el=Date.now()-start; 
-      const prog=Math.min(el/8000,1); 
-      size = data.size + Math.pow(prog,1.5)*(data.maxSize-data.size);
+      const prog=Math.min(el/12000,1);
+      size = data.size + Math.pow(prog,1.2)*(data.maxSize-data.size);
       
-      if(Date.now()-changeT>1200){ 
+      // HP 50% 이하면 2페이즈
+      if(state.bossHP <= state.maxBossHP / 2 && state.bossPhase === 1){
+        state.bossPhase = 2;
+        frog.classList.add('phase2');
+      }
+      
+      const moveSpeed = state.bossPhase === 2 ? (8 + state.difficultyLevel*1.8) : (4 + state.difficultyLevel*1.2);
+      const changeInterval = state.bossPhase === 2 ? 400 : 800;
+      
+      if(Date.now()-changeT>changeInterval){ 
         ang=Math.random()*Math.PI*2; 
         changeT=Date.now() 
       }
       
-      x += Math.cos(ang)*(3+state.difficultyLevel*0.8); 
-      y += Math.sin(ang)*(3+state.difficultyLevel*0.8);
+      x += Math.cos(ang)*moveSpeed; 
+      y += Math.sin(ang)*moveSpeed;
       
       x = Math.max(size/2, Math.min(innerWidth - size/2, x)); 
       y = Math.max(size/2, Math.min(innerHeight - size/2, y));
@@ -1564,15 +2137,39 @@
         left:(x-size/2)+'px', 
         top:(y-size/2)+'px', 
         width:size+'px', 
-        height:size+'px' 
+        height:size+'px',
+        zIndex: 50
       });
       
-      if(Date.now()-atkT>2500){ 
-        atkT=Date.now(); 
-        createSpecialEffect(x,y,'hypnotize') 
+      // 보스 공격 패턴
+      const now = Date.now();
+      if(now - state.bossLastAttack >= state.bossAttackCooldown){
+        state.bossLastAttack = now;
+        state.bossAttackCooldown = 1500 + Math.random() * 1500;
+        
+        if(state.bossPhase === 1){
+          const pattern = Math.random();
+          if(pattern < 0.4){
+            // 탄환 3~5개 발사
+            const count = 3 + Math.floor(Math.random() * 3);
+            for(let i = 0; i < count; i++){
+              setTimeout(() => createBossProjectile(x, y), i * 100);
+            }
+          } else if(pattern < 0.7){
+            // 최면 공격
+            createSpecialEffect(x, y, 'hypnotize');
+          } else {
+            // 미니 두껍 소환
+            spawnMiniFrogs(x, y, 2 + Math.floor(Math.random() * 2));
+          }
+        } else {
+          // 2페이즈: 동료 3마리 소환만
+          spawnMiniFrogs(x, y, 3);
+        }
       }
       
-      if(Math.random()<0.003 && state.bossHP<state.maxBossHP){ 
+      // HP 회복 (드물게)
+      if(Math.random()<0.002 && state.bossHP<state.maxBossHP){ 
         state.bossHP=Math.min(state.maxBossHP, state.bossHP+1); 
         updateBossHP() 
       }
@@ -1601,7 +2198,8 @@
       if(state.bossHP<=0){ 
         destroyed=true; 
         state.bossActive=false; 
-        state.bossFrog=null; 
+        state.bossFrog=null;
+        state.bossPhase=1;
         createBloodParticles(x,y,80); 
         screenShake(); 
         state.score+=data.points; 
@@ -1609,14 +2207,19 @@
         showScorePopup(x,y,data.points,'#FFD700'); 
         frog.remove(); 
         state.frogs.delete(frog); 
-        document.getElementById('boss-hp-container').classList.remove('active'); 
+        document.getElementById('boss-hp-container').classList.remove('active');
+        document.getElementById('boss-vignette').classList.remove('active');
+        document.getElementById('boss-warning').classList.remove('active');
+        
+        // 모든 보스 탄환 제거
+        state.bossProjectiles.forEach(p => p.remove());
+        state.bossProjectiles.clear();
         
         if(!debugMode){
           SAVE.totals.bossesDefeated++; 
           saveDebounced();
         }
         
-        // 보스 처치 후 일반 브금으로 복귀
         playBGM(bgmGame);
       }
     }
@@ -1630,7 +2233,7 @@
     document.getElementById('boss-hp-fill').style.width = Math.max(0,pct)+'%'; 
   }
 
-  function spawnFrogManual(key, forceShiny = false){
+  function spawnFrogManual(key, forceShiny = false, startX = null, startY = null){
     const data = frogTypes[key];
     if(!data || key === 'boss' || key === 'shiny') return;
     
@@ -1644,16 +2247,26 @@
       frog.dataset.shiny = 'true';
     }
     
-    const video=document.createElement('video'); 
-    Object.assign(video,{
-      src:data.video, 
-      autoplay:true, 
-      loop:true, 
-      muted:true, 
-      playsInline:true
-    }); 
-    frog.appendChild(video); 
-    frog.querySelector('video').style.borderColor = data.color; 
+    // 미디어 타입에 따라 생성
+    const mediaEl = data.type === 'video' ? document.createElement('video') : document.createElement('img');
+    
+    if(data.type === 'video'){
+      Object.assign(mediaEl, {
+        src: data.media,
+        autoplay: true,
+        loop: true,
+        muted: true,
+        playsInline: true
+      });
+    } else {
+      mediaEl.src = data.media;
+    }
+    
+    frog.appendChild(mediaEl);
+    
+    const trailColor = rarityColors[data.rarity] || '#4CAF50';
+    mediaEl.style.borderColor = isShiny ? '#FFD700' : data.color;
+    
     document.body.appendChild(frog); 
     state.frogs.add(frog); 
     
@@ -1672,36 +2285,40 @@
     if(!SAVE.stats[key] && !debugMode) SAVE.stats[key]={caught:0,bestCombo:0,bestGain:0}; 
     if(!debugMode) saveDebounced();
 
-    // 화면 가장자리에서 시작, 화면 전체에 더 분산되게 목적지 설정
     const margin = 50;
     const side = Math.floor(Math.random() * 4);
     let sx, sy;
     
-    if(side === 0){
-      sx = margin;
-      sy = margin + Math.random() * (innerHeight - margin * 2);
-    } else if(side === 1){
-      sx = innerWidth - margin;
-      sy = margin + Math.random() * (innerHeight - margin * 2);
-    } else if(side === 2){
-      sx = margin + Math.random() * (innerWidth - margin * 2);
-      sy = margin;
+    if(startX !== null && startY !== null){
+      sx = startX;
+      sy = startY;
     } else {
-      sx = margin + Math.random() * (innerWidth - margin * 2);
-      sy = innerHeight - margin;
+      if(side === 0){
+        sx = margin;
+        sy = margin + Math.random() * (innerHeight - margin * 2);
+      } else if(side === 1){
+        sx = innerWidth - margin;
+        sy = margin + Math.random() * (innerHeight - margin * 2);
+      } else if(side === 2){
+        sx = margin + Math.random() * (innerWidth - margin * 2);
+        sy = margin;
+      } else {
+        sx = margin + Math.random() * (innerWidth - margin * 2);
+        sy = innerHeight - margin;
+      }
     }
     
-    // 목적지를 화면 전체에 더 넓게 분산
     const tx = margin * 3 + Math.random() * (innerWidth - margin * 6);
     const ty = margin * 3 + Math.random() * (innerHeight - margin * 6);
 
     let size=data.size, x=sx, y=sy, destroyed=false, start=Date.now(), danceOffset=0, flexT=0, grow=1, rushSpeed=0;
+    let lastTrailTime = 0;
 
     (function anim(){ 
       if(destroyed||!state.active||state.paused) return; 
       
       const elapsed=Date.now()-start; 
-      const life = Math.max(400, data.lifespan - state.difficultyLevel*250); 
+      const life = Math.max(600, data.lifespan - state.difficultyLevel*200); 
       let progress=Math.min(elapsed/life,1); 
       let ease=1 - Math.pow(1-progress,3);
       
@@ -1751,8 +2368,14 @@
         left:(x-size/2)+'px', 
         top:(y-size/2)+'px', 
         width:size+'px', 
-        height:size+'px' 
+        height:size+'px'
       });
+      
+      // Trail 효과
+      if(Date.now() - lastTrailTime > 80){
+        createTrail(x, y, size * 0.8, isShiny ? '#FFD700' : trailColor);
+        lastTrailTime = Date.now();
+      }
       
       if(isShiny){
         createShinyParticles(frog, x, y, size);
@@ -1765,8 +2388,9 @@
         }
         frog.remove(); 
         state.frogs.delete(frog);
+        state.nuclearFrogHP.delete(frog);
         state.lastMissedFrogType = key;
-        if(state.active) loseLife(); 
+        if(state.active && !debugGodMode) loseLife(key === 'nuclear'); // 핵두껍이면 2데미지
         return 
       }
       
@@ -1774,9 +2398,32 @@
     })();
 
     function onHit(ev){ 
-      if(destroyed||!state.active||state.paused) return; 
-      destroyed=true; 
+      if(destroyed||!state.active||state.paused) return;
       ev?.stopPropagation?.();
+      
+      // 핵두껍은 2대 맞아야 죽음
+      if(key === 'nuclear'){
+        if(!state.nuclearFrogHP.has(frog)){
+          state.nuclearFrogHP.set(frog, 2);
+        }
+        
+        let hp = state.nuclearFrogHP.get(frog);
+        hp--;
+        state.nuclearFrogHP.set(frog, hp);
+        
+        if(hp > 0){
+          // 아직 안 죽음
+          playHitSound();
+          createBloodParticles(x,y,20);
+          createHitRing(x, y);
+          screenShake(); 
+          maybeVibrate([8]);
+          showScorePopup(x,y,50,'#FFD700');
+          return;
+        }
+      }
+      
+      destroyed=true;
       
       playHitSound();
       
@@ -1790,8 +2437,11 @@
       maybeVibrate([8]);
       
       const now=Date.now(); 
-      if(now - state.lastHitTime < 1200) state.combo++; 
-      else state.combo=1; 
+      if(now - state.lastHitTime < 1500) {
+        state.combo++;
+      } else {
+        state.combo=1;
+      }
       state.lastHitTime=now;
       
       const mult = 1 + Math.min(state.combo*0.15, 2);
@@ -1813,6 +2463,7 @@
       
       frog.remove(); 
       state.frogs.delete(frog);
+      state.nuclearFrogHP.delete(frog);
       
       if(!debugMode){
         SAVE.totals.hits++; 
@@ -1833,19 +2484,25 @@
     
     if(debugMode && !debugRandomSpawn) return;
     
+    // 보스가 있으면 스폰 주기를 훨씬 더 느리게 (초보 난이도보다 느림)
+    if(state.bossActive){
+      clearInterval(spawnInterval);
+      spawnInterval = setInterval(spawnFrog, 2500); // 2.5초마다
+    }
+    
     const rand=Math.random(); 
+    
+    // 보스 스폰 확률 (점수 800 이상일 때)
+    if(rand < 0.008 && !state.bossActive && state.score > 800){
+      spawnBoss();
+      return;
+    }
+    
     let cumulative=0; 
     let key='chingu';
     
     for(const [k,d] of Object.entries(frogTypes)){
-      if(k==='boss'){ 
-        if(rand<0.003 && !state.bossActive && state.score>800){ 
-          spawnBoss(); 
-          return 
-        } 
-        continue 
-      }
-      if(k==='shiny') continue;
+      if(k==='boss' || k==='shiny') continue;
       
       cumulative += d.spawnChance; 
       if(rand < cumulative){ 
@@ -1857,15 +2514,26 @@
     spawnFrogManual(key);
   }
 
-  function loseLife(){ 
-    state.lives--; 
-    state.combo=0; 
+  function loseLife(isNuclear = false){ 
+    const damage = isNuclear ? 2 : 1;
+    state.lives -= damage;
+    state.combo=0; // 콤보 리셋
+    state.lastHitTime=0; // 콤보 타이머 리셋
     updateUI(); 
     
     playRandomSound(damageAudioPool);
     
     if(state.lastMissedFrogType){
       damageFlash(state.lastMissedFrogType);
+    }
+    
+    // 핵두껍 비네트 효과
+    if(isNuclear){
+      const nuclearVignette = document.getElementById('nuclear-vignette');
+      nuclearVignette.classList.add('active');
+      setTimeout(() => {
+        nuclearVignette.classList.remove('active');
+      }, 1000);
     }
     
     screenShake(); 
@@ -1880,11 +2548,11 @@
   }
   
   function increaseDifficulty(){ 
-    if(!state.active||state.spawnDelay<=state.minSpawnDelay||state.paused) return; 
+    if(!state.active||state.spawnDelay<=state.minSpawnDelay||state.paused||state.bossActive) return; // 보스 있으면 난이도 안 올림
     
-    // 난이도 증가 속도 대폭 강화
-    state.spawnDelay = Math.max(state.minSpawnDelay, state.spawnDelay - 45); 
-    state.difficultyLevel = Math.min(15, Math.floor((800 - state.spawnDelay)/40)); 
+    // 난이도 증가 속도를 많이 늦춤
+    state.spawnDelay = Math.max(state.minSpawnDelay, state.spawnDelay - 25); 
+    state.difficultyLevel = Math.min(15, Math.floor((1200 - state.spawnDelay)/60)); 
     
     clearInterval(spawnInterval); 
     spawnInterval = setInterval(spawnFrog, state.spawnDelay); 
@@ -1897,7 +2565,9 @@
   }
 
   function gameOver(){ 
-    state.active=false; 
+    state.active=false;
+    state.combo=0;
+    state.lastHitTime=0;
     clearInterval(spawnInterval); 
     clearInterval(difficultyInterval); 
     clearInterval(gameTimeInterval); 
@@ -1909,7 +2579,13 @@
     }); 
     state.frogs.clear();
     
-    // BGM 정지
+    // 모든 보스 탄환 제거
+    state.bossProjectiles.forEach(p => p.remove());
+    state.bossProjectiles.clear();
+    state.nuclearFrogHP.clear();
+    
+    document.getElementById('boss-warning').classList.remove('active');
+    
     stopAllBGM();
     
     playRandomDeathSound();
@@ -1944,6 +2620,11 @@
   }
   
   function startGame(){ 
+    if(!checkResolution()){
+      alert('해상도가 너무 낮습니다. 최소 1024×768 이상이 필요합니다.');
+      return;
+    }
+    
     stopDeathSound();
     
     state.score=0; 
@@ -1952,32 +2633,39 @@
     state.active=true; 
     state.paused=false; 
     state.startTime=Date.now(); 
-    state.lastHitTime=0; 
-    state.spawnDelay=800; 
+    state.lastHitTime=0;
+    state.spawnDelay=1200; 
     state.bossActive=false; 
     state.bossHP=0; 
-    state.bossFrog=null; 
+    state.bossFrog=null;
+    state.bossPhase=1;
     state.frogs.clear(); 
     state.gameTime=0; 
     state.difficultyLevel=0;
     state.shinyCaughtThisGame=0;
     state.lastMissedFrogType=null;
+    state.bossProjectiles.clear();
+    state.nuclearFrogHP.clear();
     updateUI();
     
-    // 게임 브금 재생
-    playBGM(bgmGame);
+    // BGM 즉시 재생
+    if(!audioUnlocked) unlockAudioOnce();
+    stopAllBGM();
+    setTimeout(() => playBGM(bgmGame), 100);
     
     document.getElementById('main-menu').style.display='none'; 
     document.getElementById('game-over').classList.remove('active'); 
     document.getElementById('boss-hp-container').classList.remove('active'); 
     document.getElementById('pause-screen').classList.remove('active');
+    document.getElementById('boss-vignette').classList.remove('active');
+    document.getElementById('boss-warning').classList.remove('active');
     
     clearInterval(spawnInterval); 
     clearInterval(difficultyInterval); 
     clearInterval(gameTimeInterval);
     
     spawnInterval = setInterval(spawnFrog, state.spawnDelay); 
-    difficultyInterval = setInterval(increaseDifficulty, 2000); // 더 자주 난이도 증가
+    difficultyInterval = setInterval(increaseDifficulty, 4000);
     gameTimeInterval = setInterval(updateGameTime, 1000);
   }
   
@@ -1986,7 +2674,6 @@
     state.paused = !state.paused; 
     document.getElementById('pause-screen').classList.toggle('active', state.paused);
     
-    // 일시정지 시 BGM도 일시정지
     if(state.paused){
       if(currentBGM && !currentBGM.paused) currentBGM.pause();
     } else {
@@ -1998,7 +2685,9 @@
     stopDeathSound();
     
     state.active=false; 
-    state.paused=false; 
+    state.paused=false;
+    state.combo=0;
+    state.lastHitTime=0;
     clearInterval(spawnInterval); 
     clearInterval(difficultyInterval); 
     clearInterval(gameTimeInterval); 
@@ -2008,14 +2697,21 @@
       }
       f.remove();
     }); 
-    state.frogs.clear(); 
+    state.frogs.clear();
+    state.bossProjectiles.forEach(p => p.remove());
+    state.bossProjectiles.clear();
+    state.nuclearFrogHP.clear();
+    
     document.getElementById('main-menu').style.display='flex'; 
     document.getElementById('game-over').classList.remove('active'); 
     document.getElementById('collection-modal').classList.remove('active'); 
-    document.getElementById('pause-screen').classList.remove('active'); 
+    document.getElementById('pause-screen').classList.remove('active');
+    document.getElementById('boss-vignette').classList.remove('active');
+    document.getElementById('boss-warning').classList.remove('active');
     
-    // 메뉴 브금 재생
-    playBGM(bgmMenu);
+    if(!audioUnlocked) unlockAudioOnce();
+    stopAllBGM();
+    setTimeout(() => playBGM(bgmMenu), 100);
   }
 
   function updateCollection(filter='all'){
@@ -2049,15 +2745,21 @@
       thumb.className='thumb'; 
       
       if(disc){ 
-        const v=document.createElement('video'); 
-        Object.assign(v,{
-          src:data.video, 
-          muted:true, 
-          loop:true, 
-          playsInline:true
-        }); 
-        v.autoplay=true; 
-        thumb.appendChild(v) 
+        const mediaEl = data.type === 'video' ? document.createElement('video') : document.createElement('img');
+        
+        if(data.type === 'video'){
+          Object.assign(mediaEl, {
+            src: data.media,
+            muted: true,
+            loop: true,
+            playsInline: true,
+            autoplay: true
+          });
+        } else {
+          mediaEl.src = data.media;
+        }
+        
+        thumb.appendChild(mediaEl);
       }
       
       const right=document.createElement('div');
@@ -2107,10 +2809,40 @@
       spawner.appendChild(btn);
     });
     
+    document.getElementById('toggle-debug-menu').addEventListener('click', function(){
+      debugMenuVisible = !debugMenuVisible;
+      const controls = document.querySelectorAll('.debug-controls .debug-btn:not(#toggle-debug-menu)');
+      const spawnerSection = document.getElementById('debug-spawner-section');
+      const panel = document.getElementById('debug-panel');
+      const h3 = panel.querySelector('h3');
+      
+      controls.forEach(btn => {
+        btn.style.display = debugMenuVisible ? 'inline-block' : 'none';
+      });
+      spawnerSection.style.display = debugMenuVisible ? 'block' : 'none';
+      h3.style.display = debugMenuVisible ? 'block' : 'none';
+      
+      if(debugMenuVisible){
+        panel.classList.remove('hidden');
+      } else {
+        panel.classList.add('hidden');
+      }
+      
+      this.textContent = `디버그 메뉴: ${debugMenuVisible ? '숨기기' : '보이기'}`;
+      playUIClick();
+    });
+    
     document.getElementById('toggle-random-spawn').addEventListener('click', function(){
       debugRandomSpawn = !debugRandomSpawn;
       this.textContent = `랜덤 스폰: ${debugRandomSpawn ? 'ON' : 'OFF'}`;
       this.classList.toggle('active', debugRandomSpawn);
+      playUIClick();
+    });
+    
+    document.getElementById('toggle-godmode').addEventListener('click', function(){
+      debugGodMode = !debugGodMode;
+      this.textContent = `무적 모드: ${debugGodMode ? 'ON' : 'OFF'}`;
+      this.classList.toggle('active', debugGodMode);
       playUIClick();
     });
     
@@ -2122,6 +2854,8 @@
         f.remove();
       });
       state.frogs.clear();
+      state.bossProjectiles.forEach(p => p.remove());
+      state.bossProjectiles.clear();
       playUIClick();
     });
     
@@ -2129,20 +2863,154 @@
       spawnBoss();
       playUIClick();
     });
+    
+    document.getElementById('add-score-debug').addEventListener('click', () => {
+      state.score += 1000;
+      updateUI();
+      playUIClick();
+    });
   }
 
+  // 에셋 로딩 시스템 (여러 CORS 프록시 + 캐싱)
+  async function loadAllAssets(){
+    await initDB();
+    
+    const loadingScreen = document.getElementById('loading-screen');
+    const loadingText = document.getElementById('loading-text');
+    const loadingBar = document.getElementById('loading-bar');
+    
+    // 여러 CORS 프록시 목록
+    const corsProxies = [
+      '', // 직접 시도
+      'https://api.allorigins.win/raw?url=',
+      'https://cors.bridged.cc/',
+    ];
+    
+    const allUrls = [
+      'https://github.com/OCGK123/Poision-Toad/raw/refs/heads/main/menu.mp3',
+      'https://github.com/OCGK123/Poision-Toad/raw/refs/heads/main/infight.mp3',
+      'https://github.com/OCGK123/Poision-Toad/raw/refs/heads/main/bossfight.mp3',
+      'https://www.myinstants.com/media/sounds/voice_sans.mp3',
+      'https://github.com/OCGK123/Poision-Toad/raw/refs/heads/main/Toad.mp3',
+      'https://www.myinstants.com/media/sounds/whoosh-wind.mp3',
+      ...damageSounds,
+      ...deathSounds,
+      ...Object.values(frogTypes).map(f => f.media)
+    ];
+    
+    let loaded = 0;
+    const total = allUrls.length;
+    
+    loadingText.textContent = `로딩중... 0/${total}`;
+    loadingBar.style.width = '0%';
+    
+    // 병렬 처리로 속도 향상
+    const loadPromises = allUrls.map(async (url) => {
+      // 캐시 확인
+      const cached = await getCachedAsset(url);
+      if(cached){
+        return true;
+      }
+      
+      // 프록시 시도
+      for(const proxy of corsProxies){
+        try{
+          const testUrl = proxy + (proxy ? encodeURIComponent(url) : url);
+          const mode = proxy ? 'cors' : 'no-cors';
+          
+          await Promise.race([
+            fetch(testUrl, { method: 'HEAD', mode: mode }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+          ]);
+          
+          await cacheAsset(url, true);
+          return true;
+        }catch{}
+      }
+      return false;
+    });
+    
+    // 진행상황 업데이트
+    for(const promise of loadPromises){
+      await promise;
+      loaded++;
+      const pct = Math.floor((loaded / total) * 100);
+      loadingBar.style.width = pct + '%';
+      loadingText.textContent = `로딩중... ${loaded}/${total}`;
+    }
+    
+    // 로딩 완료 후 로고 애니메이션
+    loadingScreen.style.display = 'none';
+    
+    const logoScreen = document.getElementById('logo-screen');
+    logoScreen.style.display = 'flex';
+    
+    // 4초 후 메인 메뉴
+    setTimeout(() => {
+      logoScreen.style.display = 'none';
+      document.getElementById('main-menu').style.display = 'flex';
+      
+      // BGM 즉시 시작
+      unlockAudioOnce();
+      setTimeout(() => {
+        playBGM(bgmMenu);
+      }, 100);
+      
+      // 클릭으로도 보장
+      document.body.addEventListener('click', function initBGM(){
+        if(!currentBGM || currentBGM.paused){
+          unlockAudioOnce();
+          playBGM(bgmMenu);
+        }
+        document.body.removeEventListener('click', initBGM);
+      }, { once: true });
+    }, 4000);
+  }
+
+  // 버튼 이벤트
   const buttons = document.querySelectorAll('.menu-btn, .pause-btn, .game-over-btn, .close-btn, .chip');
   buttons.forEach(btn => {
-    btn.addEventListener('click', playUIClick);
+    btn.addEventListener('click', () => {
+      playUIClick();
+      // BGM 보장
+      if(!audioUnlocked) unlockAudioOnce();
+      if(!currentBGM || currentBGM.paused){
+        setTimeout(() => playBGM(bgmMenu), 50);
+      }
+    });
   });
 
-  document.getElementById('start-btn').addEventListener('click', startGame);
+  document.getElementById('start-btn').addEventListener('click', () => {
+    if(!audioUnlocked) unlockAudioOnce();
+    startGame();
+  });
   document.getElementById('collection-menu-btn').addEventListener('click', ()=>{ 
     updateCollection(); 
     document.getElementById('collection-modal').classList.add('active') 
   });
   document.getElementById('how-to-play-btn').addEventListener('click', ()=>{ 
-    document.getElementById('howto-modal').classList.add('active') 
+    const howtoList = document.getElementById('howto-list');
+    
+    // 보스를 만난 적 있으면 보스 정보 추가
+    if(SAVE.discovered['boss']){
+      const hasBossInfo = Array.from(howtoList.children).some(li => li.textContent.includes('보스'));
+      
+      if(!hasBossInfo){
+        const li1 = document.createElement('li');
+        li1.innerHTML = '<strong style="color:#ff00ff">🌟 보스 (독두껍)</strong>: HP를 0으로 만들어야 함!';
+        howtoList.appendChild(li1);
+        
+        const li2 = document.createElement('li');
+        li2.innerHTML = '<strong style="color:#ff00ff">보스 공격 패턴</strong>: 탄환 발사(클릭으로 방어), 최면, 동료 소환';
+        howtoList.appendChild(li2);
+        
+        const li3 = document.createElement('li');
+        li3.innerHTML = '<strong style="color:#ff00ff">보스 2페이즈</strong>: HP 50% 이하 시 빠른 이동 + 검은 오오라';
+        howtoList.appendChild(li3);
+      }
+    }
+    
+    document.getElementById('howto-modal').classList.add('active');
   });
   document.getElementById('settings-menu-btn').addEventListener('click', ()=>{ 
     document.getElementById('settings-modal').classList.add('active') 
@@ -2160,7 +3028,6 @@
     })
   );
 
-  document.getElementById('pause-btn').addEventListener('click', togglePause);
   document.getElementById('resume-btn').addEventListener('click', togglePause);
   document.getElementById('pause-collection-btn').addEventListener('click', ()=>{ 
     updateCollection(); 
@@ -2248,7 +3115,21 @@
     inp.click() 
   });
   
-  document.getElementById('reset-btn').addEventListener('click', ()=>{ 
+  document.getElementById('clear-cache-btn').addEventListener('click', async ()=>{ 
+    playUIClick();
+    if(confirm('캐시를 삭제하고 새로고침하시겠습니까?')){ 
+      try{
+        await clearCache();
+        alert('캐시가 삭제되었습니다. 페이지를 새로고침합니다.');
+        window.location.reload();
+      }catch(e){
+        alert('캐시 삭제 중 오류 발생: ' + e.message);
+      }
+    } 
+  });
+  
+  document.getElementById('reset-btn').addEventListener('click', ()=>{
+    playUIClick(); 
     if(confirm('정말 초기화할까요? 진행도/설정이 모두 삭제됩니다.')){ 
       try{ 
         localStorage.removeItem(STORAGE_KEY) 
@@ -2284,6 +3165,25 @@
     document.getElementById('score-log-modal').classList.remove('active')
   );
 
+  // ESC 키로 일시정지
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && state.active && !state.paused){
+      togglePause();
+    }
+  });
+
+  // 창 포커스 감지
+  window.addEventListener('blur', () => {
+    if(state.active && !state.paused){
+      state.lives = 0;
+      gameOver();
+    }
+  });
+
+  window.addEventListener('focus', () => {
+    state.windowFocused = true;
+  });
+
   document.body.addEventListener('pointerdown', unlockAudioOnce, {passive:true});
   document.body.addEventListener('touchstart', ()=>{}, {passive:true});
   
@@ -2295,11 +3195,18 @@
 
   window.addEventListener('contextmenu', e=>e.preventDefault());
 
+  // 초기화
   loadSave(); 
   applyAudioSettings();
   applyBGMSettings();
-  showMainMenu();
   initDebugMode();
+  
+  // 에셋 로딩 후 게임 시작 가능
+  if(checkResolution()){
+    loadAllAssets();
+  } else {
+    document.getElementById('loading-screen').style.display = 'none';
+  }
   </script>
 </body>
 </html>
